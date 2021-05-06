@@ -1,0 +1,11 @@
+{
+  "codeowners": ["@sshaikh"],
+  "config_flow": false,
+  "dependencies": [],
+  "documentation": "https://github.com/sshaikh/homeassistant-lupt",
+  "domain": "lupt",
+  "iot_class": "assumed_state",
+  "name": "London Unified Prayer Times",
+  "requirements": ["london-unified-prayer-times==1.1.0"],
+  "version": "1.0.0"
+}

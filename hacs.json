@@ -1,0 +1,5 @@
+{
+  "name": "London Unified Prayer Times",
+  "render_readme": true,
+  "iot_class": "assumed_state"
+}
