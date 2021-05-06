@@ -6,6 +6,6 @@
   "domain": "lupt",
   "iot_class": "assumed_state",
   "name": "London Unified Prayer Times",
-  "requirements": ["london-unified-prayer-times==1.1.0"],
+  "requirements": ["london-unified-prayer-times==1.2.0"],
   "version": "1.0.0"
 }

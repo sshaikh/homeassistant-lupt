@@ -23,7 +23,6 @@ ELM_URL = "https://mock.location.com"
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
-    # @TODO: Add setup code.
     lupt = Lupt(hass)
     await lupt.async_init()
     return True
@@ -40,11 +39,11 @@ class Lupt(Entity):
 
 
     async def async_init(self):
-#        try:
-#            self.timetable = lupt_cache.load_timetable(HASS_TIMETABLE, None)
-#        except Exception:
-        config = lupt_config.load_config(None)
-        self.timetable = await self.hass.async_add_executor_job(lambda: lupt_cache.init_timetable(HASS_TIMETABLE, ELM_URL, config))
+        try:
+            self.timetable = lupt_cache.load_timetable(HASS_TIMETABLE, None)
+        except Exception:
+            config = lupt_config.load_config(None)
+            self.timetable = await self.hass.async_add_executor_job(lambda: lupt_cache.init_timetable(HASS_TIMETABLE, ELM_URL, config))
 
         self.async_write_ha_state()
 
