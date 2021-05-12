@@ -4,22 +4,18 @@ from homeassistant.helpers.entity import Entity
 from london_unified_prayer_times import (
     cache as lupt_cache,
     config as lupt_config,
-    constants as lupt_constants,
     query as lupt_query,
 )
 
-DOMAIN = "lupt"
-ENTITY_ID = "lupt.lupt"
-
-tk = lupt_constants.TimetableKeys
-
-STATE_ATTR_LAST_UPDATED = tk.LAST_UPDATED.value
-STATE_ATTR_MIN_DATE = tk.MIN_DATE.value
-STATE_ATTR_MAX_DATE = tk.MAX_DATE.value
-STATE_ATTR_NUM_DATES = tk.NUMBER_OF_DATES.value
-
-HASS_TIMETABLE = "homeassistant"
-ELM_URL = "https://mock.location.com"
+from .const import (
+    ELM_URL,
+    ENTITY_ID,
+    HASS_TIMETABLE,
+    STATE_ATTR_LAST_UPDATED,
+    STATE_ATTR_MAX_DATE,
+    STATE_ATTR_MIN_DATE,
+    STATE_ATTR_NUM_DATES,
+)
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
@@ -42,7 +38,9 @@ class Lupt(Entity):
     async def async_init(self):
         """Initialise async part of lupt."""
         try:
-            self.timetable = lupt_cache.load_timetable(HASS_TIMETABLE, None)
+            self.timetable = await self.hass.async_add_executor_job(
+                lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
+            )
         except Exception:
             config = lupt_config.load_config(None)
 

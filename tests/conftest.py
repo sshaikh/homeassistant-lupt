@@ -2,6 +2,8 @@
 from london_unified_prayer_times import config, timetable
 import pytest
 
+from custom_components.lupt import Lupt
+
 
 @pytest.fixture
 def three_unsorted_days():
@@ -74,13 +76,26 @@ def three_day_timetable(three_unsorted_days):
 
 
 @pytest.fixture
-def lupt_mock(three_day_timetable, mocker):
+def lupt_mock_good_load(three_day_timetable, mocker):
+    """Mock lupt functions."""
+    mocker.patch(
+        "custom_components.lupt.lupt_cache." + "refresh_timetable_by_name",
+        return_value=three_day_timetable,
+    )
+
+
+@pytest.fixture
+def lupt_mock_bad_load(three_day_timetable, mocker):
     """Mock lupt functions."""
     mocker.patch(
         "custom_components.lupt.lupt_cache." + "init_timetable",
         return_value=three_day_timetable,
     )
-    mocker.patch(
-        "custom_components.lupt.lupt_cache." + "refresh_timetable",
-        return_value=three_day_timetable,
-    )
+
+
+@pytest.fixture
+def lupt_mock(hass, three_day_timetable, mocker):
+    """Mock the loaded timetable."""
+    lupt = Lupt(hass)
+    lupt.timetable = three_day_timetable
+    return lupt
