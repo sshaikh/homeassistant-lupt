@@ -1,6 +1,6 @@
+"""Main integration for lupt."""
 from homeassistant import core
 from homeassistant.helpers.entity import Entity
-from homeassistant.util import dt as dt_util
 from london_unified_prayer_times import (
     cache as lupt_cache,
     config as lupt_config,
@@ -21,6 +21,7 @@ STATE_ATTR_NUM_DATES = tk.NUMBER_OF_DATES.value
 HASS_TIMETABLE = "homeassistant"
 ELM_URL = "https://mock.location.com"
 
+
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
     lupt = Lupt(hass)
@@ -29,40 +30,45 @@ async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
 
 
 class Lupt(Entity):
-    """London Unified Prayer Times"""
+    """London Unified Prayer Times."""
 
     entity_id = ENTITY_ID
 
     def __init__(self, hass):
         """Initialise lupt."""
         self.hass = hass
-
+        self.timetable = None
 
     async def async_init(self):
+        """Initialise async part of lupt."""
         try:
             self.timetable = lupt_cache.load_timetable(HASS_TIMETABLE, None)
         except Exception:
             config = lupt_config.load_config(None)
-            self.timetable = await self.hass.async_add_executor_job(lambda: lupt_cache.init_timetable(HASS_TIMETABLE, ELM_URL, config))
+
+            self.timetable = await self.hass.async_add_executor_job(
+                lambda: lupt_cache.init_timetable(HASS_TIMETABLE, ELM_URL, config)
+            )
 
         self.async_write_ha_state()
 
-
-
     @property
     def name(self):
+        """Friendly name."""
         return "London Unified Prayer Times"
 
     @property
     def state(self):
+        """State."""
         return "Hello world!"
 
     @property
     def extra_state_attributes(self):
+        """Extra HomeAssistant attributes."""
         info = lupt_query.get_info(self.timetable)
         return {
             STATE_ATTR_LAST_UPDATED: info[3][0].isoformat(),
             STATE_ATTR_MIN_DATE: info[2][1].isoformat(),
             STATE_ATTR_MAX_DATE: info[2][2].isoformat(),
-            STATE_ATTR_NUM_DATES: info[2][0]
+            STATE_ATTR_NUM_DATES: info[2][0],
         }
