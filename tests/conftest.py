@@ -1,5 +1,5 @@
 """Fixtures for tests."""
-from london_unified_prayer_times import config, timetable
+from london_unified_prayer_times import config as lupt_config, timetable
 import pytest
 
 from custom_components.lupt import Lupt
@@ -69,10 +69,16 @@ def three_unsorted_days():
 @pytest.fixture
 def three_day_timetable(three_unsorted_days):
     """Create a mocked timetable."""
-    prayers_config = config.default_config
+    prayers_config = lupt_config.default_config
     return timetable.build_timetable(
         "pytest", "conftest.py", prayers_config, three_unsorted_days
     )
+
+
+@pytest.fixture
+def config():
+    """Create a mocked hass config."""
+    return {"url": "https://mock.location.com"}
 
 
 @pytest.fixture

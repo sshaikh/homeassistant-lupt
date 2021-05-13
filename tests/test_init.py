@@ -11,14 +11,14 @@ from custom_components.lupt.const import (
 )
 
 
-async def test_async_setup(hass, lupt_mock_good_load):
+async def test_async_setup(hass, lupt_mock_good_load, config):
     """Test the component gets setup."""
-    assert await async_setup_component(hass, DOMAIN, {}) is True
+    assert await async_setup_component(hass, DOMAIN, config) is True
 
 
-async def test_async_setup_no_load(hass, lupt_mock_bad_load):
+async def test_async_setup_no_load(hass, lupt_mock_bad_load, config):
     """Test the component gets setup when no existing timetable."""
-    assert await async_setup_component(hass, DOMAIN, {}) is True
+    assert await async_setup_component(hass, DOMAIN, config) is True
 
 
 def test_simple_properties(lupt_mock):
