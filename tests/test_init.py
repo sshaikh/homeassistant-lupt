@@ -1,6 +1,9 @@
 """Test component setup."""
+import datetime
+
 from homeassistant.setup import async_setup_component
 from london_unified_prayer_times import query as lupt_query
+import pytz
 
 from custom_components.lupt.const import (
     DOMAIN,
@@ -9,6 +12,11 @@ from custom_components.lupt.const import (
     STATE_ATTR_MIN_DATE,
     STATE_ATTR_NUM_DATES,
 )
+
+
+def create_utc_datetime(y, m, d, hh, mm):
+    """Create a simple UTC time."""
+    return pytz.utc.localize(datetime.datetime(y, m, d, hh, mm))
 
 
 async def test_async_setup(hass, lupt_mock_good_load, config):
@@ -24,7 +32,6 @@ async def test_async_setup_no_load(hass, lupt_mock_bad_load, config):
 def test_simple_properties(lupt_mock):
     """Test an already loaded timetable."""
     assert lupt_mock.name == "London Unified Prayer Times"
-    assert lupt_mock.state == "Hello world!"
 
 
 def test_extra_state_attributes(three_day_timetable, lupt_mock):
@@ -37,3 +44,16 @@ def test_extra_state_attributes(three_day_timetable, lupt_mock):
         STATE_ATTR_MAX_DATE: "2021-10-03",
         STATE_ATTR_NUM_DATES: 3,
     }
+
+
+def help_test_calc_state(lupt, y, m, d, hh, mm, state):
+    """Help match UTC with expected prayer state."""
+    dt = create_utc_datetime(y, m, d, hh, mm)
+    lupt.calculate_prayer_time(dt)
+    assert lupt.state == state
+
+
+def test_calc_state(lupt_mock):
+    """Test prayer state."""
+    help_test_calc_state(lupt_mock, 2021, 10, 2, 13, 0, "Zuhr")
+    help_test_calc_state(lupt_mock, 2021, 10, 2, 16, 0, "Asr")

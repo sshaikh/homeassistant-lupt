@@ -5,7 +5,9 @@ from homeassistant.helpers.entity import Entity
 from london_unified_prayer_times import (
     cache as lupt_cache,
     config as lupt_config,
+    constants as lupt_constants,
     query as lupt_query,
+    report as lupt_report,
 )
 import voluptuous as vol
 
@@ -39,6 +41,7 @@ class Lupt(Entity):
         """Initialise lupt."""
         self.hass = hass
         self.timetable = None
+        self._state = None
 
     async def async_init(self, url):
         """Initialise async part of lupt."""
@@ -63,7 +66,7 @@ class Lupt(Entity):
     @property
     def state(self):
         """State."""
-        return "Hello world!"
+        return self._state
 
     @property
     def extra_state_attributes(self):
@@ -75,3 +78,11 @@ class Lupt(Entity):
             STATE_ATTR_MAX_DATE: info[2][2].isoformat(),
             STATE_ATTR_NUM_DATES: info[2][0],
         }
+
+    def calculate_prayer_time(self, dt):
+        """Calculate current prayer."""
+        config = lupt_query.get_config(self.timetable)
+        times = config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
+        rs = config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
+        nandn = lupt_query.get_now_and_next(self.timetable, times, dt)
+        self._state = lupt_report.perform_replace_strings(nandn[0][0], rs)
