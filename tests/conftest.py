@@ -85,7 +85,7 @@ def config():
 def lupt_mock_good_load(three_day_timetable, mocker):
     """Mock lupt functions."""
     mocker.patch(
-        "custom_components.lupt.lupt_cache." + "refresh_timetable_by_name",
+        "custom_components.lupt.lupt_cache." + "init_timetable",
         return_value=three_day_timetable,
     )
 
@@ -94,11 +94,11 @@ def lupt_mock_good_load(three_day_timetable, mocker):
 def lupt_mock_bad_load(three_day_timetable, mocker):
     """Mock lupt functions."""
     mocker.patch(
-        "custom_components.lupt.lupt_cache." + "refresh_timetable_by_name",
+        "custom_components.lupt.lupt_cache." + "init_timetable",
         side_effect=Exception,
     )
     mocker.patch(
-        "custom_components.lupt.lupt_cache." + "init_timetable",
+        "custom_components.lupt.lupt_cache." + "refresh_timetable_by_name",
         return_value=three_day_timetable,
     )
 
