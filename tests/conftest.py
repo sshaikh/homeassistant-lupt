@@ -1,5 +1,9 @@
 """Fixtures for tests."""
-from london_unified_prayer_times import config as lupt_config, timetable
+from london_unified_prayer_times import (
+    config as lupt_config,
+    constants as lupt_constants,
+    timetable,
+)
 import pytest
 
 from custom_components.lupt import Lupt
@@ -108,4 +112,6 @@ def lupt_mock(hass, three_day_timetable, mocker):
     """Mock the loaded timetable."""
     lupt = Lupt(hass)
     lupt.timetable = three_day_timetable
+    lupt.times = lupt.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
+    lupt.rs = lupt.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
     return lupt
