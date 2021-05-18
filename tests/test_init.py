@@ -44,9 +44,9 @@ def test_extra_state_attributes(three_day_timetable, lupt_mock):
 
 def help_test_calc_state(lupt, dt, state, next_change):
     """Help match UTC with expected prayer state."""
-    lupt.calculate_prayer_time(dt)
+    next_change_res = lupt.calculate_prayer_time(dt)
     assert lupt.state == state
-    assert lupt.next_change == next_change
+    assert next_change_res == next_change
 
 
 def test_calc_state(lupt_mock):

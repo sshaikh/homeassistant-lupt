@@ -47,7 +47,6 @@ class Lupt(Entity):
         self.hass = hass
         self.timetable = None
         self._state = None
-        self.next_change = None
         self._attrs = {}
         self.config = lupt_config.load_config(None)
         self.times = None
@@ -123,6 +122,7 @@ class Lupt(Entity):
         nandn = lupt_query.get_now_and_next(self.timetable, self.times, dt)
         current_prayer = nandn[0][0]
         self._state = lupt_report.perform_replace_strings(current_prayer, self.rs)
-        self.next_change = nandn[1][1]
 
         self.calculate_next_prayer_time(current_prayer, dt)
+
+        return nandn[1][1]
