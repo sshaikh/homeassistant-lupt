@@ -2,6 +2,7 @@
 from homeassistant import core
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
+from homeassistant.util import dt as dt_util
 from london_unified_prayer_times import (
     cache as lupt_cache,
     config as lupt_config,
@@ -47,7 +48,7 @@ class Lupt(Entity):
         self.timetable = None
         self._state = None
         self.next_change = None
-        self._attrs = None
+        self._attrs = {}
         self.config = lupt_config.load_config(None)
         self.times = None
         self.rs = None
@@ -65,6 +66,17 @@ class Lupt(Entity):
 
         self.times = self.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
         self.rs = self.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
+
+        dt = dt_util.utcnow()
+
+        self.calculate_stats()
+        self.calculate_islamic_date(dt)
+
+        for prayer in self.times:
+            self.calculate_next_prayer_time(prayer, dt)
+
+        self.calculate_prayer_time(dt)
+
         self.async_write_ha_state()
 
     @property
@@ -82,31 +94,35 @@ class Lupt(Entity):
         """Extra HomeAssistant attributes."""
         return self._attrs
 
-    def calculate_prayer_time(self, dt):
-        """Calculate current prayer."""
-        nandn = lupt_query.get_now_and_next(self.timetable, self.times, dt)
-        self._state = lupt_report.perform_replace_strings(nandn[0][0], self.rs)
-        self.next_change = nandn[1][1]
-
-    def calculate_prayer_attrs(self, dt):
-        """Calculate current attrs."""
+    def calculate_stats(self):
+        """Set up statistics."""
         info = lupt_query.get_info(self.timetable)
-        self._attrs = {
-            STATE_ATTR_LAST_UPDATED: info[3][0].isoformat(),
-            STATE_ATTR_MIN_DATE: info[2][1].isoformat(),
-            STATE_ATTR_MAX_DATE: info[2][2].isoformat(),
-            STATE_ATTR_NUM_DATES: info[2][0],
-        }
+        self._attrs[STATE_ATTR_LAST_UPDATED] = info[3][0].isoformat()
+        self._attrs[STATE_ATTR_MIN_DATE] = info[2][1].isoformat()
+        self._attrs[STATE_ATTR_MAX_DATE] = info[2][2].isoformat()
+        self._attrs[STATE_ATTR_NUM_DATES] = info[2][0]
 
+    def calculate_islamic_date(self, dt):
+        """Set up Islamic Date."""
         (iyear, imonth, iday) = lupt_query.get_islamic_date(self.timetable, dt.date())
         self._attrs[STATE_ATTR_ISLAMIC_DATE] = f"{iday} {imonth} {iyear}"
         self._attrs[STATE_ATTR_ISLAMIC_YEAR] = iyear
         self._attrs[STATE_ATTR_ISLAMIC_MONTH] = imonth
         self._attrs[STATE_ATTR_ISLAMIC_DAY] = iday
 
-        for time in self.times:
-            next_time = lupt_query.get_now_and_next(self.timetable, [time], dt)[1]
-            formatted_time = lupt_report.perform_replace_strings(
-                next_time[0], self.rs
-            ).lower()
-            self._attrs[f"next_{formatted_time}"] = next_time[1]
+    def calculate_next_prayer_time(self, prayer, dt):
+        """Set up the next time for given prayer."""
+        next_prayer = lupt_query.get_now_and_next(self.timetable, [prayer], dt)[1]
+        formatted_prayer_time = lupt_report.perform_replace_strings(
+            prayer, self.rs
+        ).lower()
+        self._attrs[f"next_{formatted_prayer_time}"] = next_prayer[1]
+
+    def calculate_prayer_time(self, dt):
+        """Calculate current prayer."""
+        nandn = lupt_query.get_now_and_next(self.timetable, self.times, dt)
+        current_prayer = nandn[0][0]
+        self._state = lupt_report.perform_replace_strings(current_prayer, self.rs)
+        self.next_change = nandn[1][1]
+
+        self.calculate_next_prayer_time(current_prayer, dt)

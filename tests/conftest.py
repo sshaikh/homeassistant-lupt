@@ -1,10 +1,13 @@
 """Fixtures for tests."""
+import datetime
+
 from london_unified_prayer_times import (
     config as lupt_config,
     constants as lupt_constants,
     timetable,
 )
 import pytest
+import pytz
 
 from custom_components.lupt import Lupt
 
@@ -86,16 +89,23 @@ def config():
 
 
 @pytest.fixture
-def lupt_mock_good_load(three_day_timetable, mocker):
+def start_dt():
+    """Create a simple UTC time."""
+    return pytz.utc.localize(datetime.datetime(2021, 10, 2, 13, 00))
+
+
+@pytest.fixture
+def lupt_mock_good_load(three_day_timetable, start_dt, mocker):
     """Mock lupt functions."""
     mocker.patch(
         "custom_components.lupt.lupt_cache." + "init_timetable",
         return_value=three_day_timetable,
     )
+    mocker.patch("custom_components.lupt.dt_util.utcnow", return_value=start_dt)
 
 
 @pytest.fixture
-def lupt_mock_bad_load(three_day_timetable, mocker):
+def lupt_mock_bad_load(three_day_timetable, start_dt, mocker):
     """Mock lupt functions."""
     mocker.patch(
         "custom_components.lupt.lupt_cache." + "init_timetable",
@@ -105,6 +115,7 @@ def lupt_mock_bad_load(three_day_timetable, mocker):
         "custom_components.lupt.lupt_cache." + "refresh_timetable_by_name",
         return_value=three_day_timetable,
     )
+    mocker.patch("custom_components.lupt.dt_util.utcnow", return_value=start_dt)
 
 
 @pytest.fixture

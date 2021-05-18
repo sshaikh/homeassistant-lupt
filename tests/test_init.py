@@ -65,23 +65,18 @@ def test_calc_state(lupt_mock):
     )
 
 
-def help_test_calc_attrs(lupt, y, m, d, hh, mm, attrs):
+def help_test_calc_attrs(lupt, f, attrs):
     """Help match UTC with expected prayer attrs."""
-    dt = create_utc_datetime(y, m, d, hh, mm)
-    lupt.calculate_prayer_attrs(dt)
+    f()
     for (k, v) in attrs.items():
         assert lupt.extra_state_attributes[k] == v
 
 
-def test_calc_attrs(lupt_mock):
-    """Test extra state attrs."""
+def test_calculate_stats(lupt_mock):
+    """Test statistics."""
     help_test_calc_attrs(
         lupt_mock,
-        2021,
-        10,
-        2,
-        13,
-        0,
+        lupt_mock.calculate_stats,
         {
             STATE_ATTR_LAST_UPDATED: lupt_query.get_info(lupt_mock.timetable)[3][
                 0
@@ -92,33 +87,29 @@ def test_calc_attrs(lupt_mock):
         },
     )
 
-    help_test_calc_attrs(
-        lupt_mock,
-        2021,
-        10,
-        2,
-        13,
-        0,
-        {
-            "next_asr": create_utc_datetime(2021, 10, 2, 14, 54),
-            "next_maghrib": create_utc_datetime(2021, 10, 2, 17, 39),
-            "next_ishā": create_utc_datetime(2021, 10, 2, 18, 57),
-            "next_fajr": create_utc_datetime(2021, 10, 3, 4, 34),
-            "next_sunrise": create_utc_datetime(2021, 10, 3, 6, 2),
-        },
-    )
 
+def test_calculate_islamic_date(lupt_mock):
+    """Test Islamic Date."""
     help_test_calc_attrs(
         lupt_mock,
-        2021,
-        10,
-        2,
-        13,
-        0,
+        lambda: lupt_mock.calculate_islamic_date(
+            create_utc_datetime(2021, 10, 2, 13, 0)
+        ),
         {
             STATE_ATTR_ISLAMIC_DATE: "25 Safar 1443",
             STATE_ATTR_ISLAMIC_YEAR: 1443,
             STATE_ATTR_ISLAMIC_MONTH: "Safar",
             STATE_ATTR_ISLAMIC_DAY: 25,
         },
+    )
+
+
+def test_calculate_next_prayer_time(lupt_mock):
+    """Test extra state attrs."""
+    help_test_calc_attrs(
+        lupt_mock,
+        lambda: lupt_mock.calculate_next_prayer_time(
+            "Zuhr Begins", create_utc_datetime(2021, 10, 2, 13, 0)
+        ),
+        {"next_zuhr": create_utc_datetime(2021, 10, 3, 11, 54)},
     )
