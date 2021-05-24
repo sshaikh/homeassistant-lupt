@@ -1,12 +1,17 @@
 """Test component setup."""
 import datetime
+from datetime import timedelta
+from unittest.mock import patch
 
+import homeassistant.core as ha
 from homeassistant.setup import async_setup_component
+import homeassistant.util.dt as dt_util
 from london_unified_prayer_times import query as lupt_query
 import pytz
 
 from custom_components.lupt.const import (
     DOMAIN,
+    ENTITY_ID,
     STATE_ATTR_ISLAMIC_DATE,
     STATE_ATTR_ISLAMIC_DAY,
     STATE_ATTR_ISLAMIC_MONTH,
@@ -111,5 +116,30 @@ def test_calculate_next_prayer_time(lupt_mock):
         lambda: lupt_mock.calculate_next_prayer_time(
             "Zuhr Begins", create_utc_datetime(2021, 10, 2, 13, 0)
         ),
-        {"next_zuhr": create_utc_datetime(2021, 10, 3, 11, 54)},
+        {"next_zuhr": create_utc_datetime(2021, 10, 3, 11, 54).isoformat()},
     )
+
+
+async def test_state_change(hass, legacy_patchable_time, lupt_mock_good_load, config):
+    """Test state updates on prayer time."""
+    utc_now = create_utc_datetime(2021, 10, 2, 12, 00)
+    with patch("homeassistant.helpers.condition.dt_util.utcnow", return_value=utc_now):
+        await async_setup_component(hass, DOMAIN, config)
+    await hass.async_block_till_done()
+    assert hass.states.get(ENTITY_ID).state == "Zuhr"
+
+    test_time = dt_util.parse_datetime(
+        hass.states.get(ENTITY_ID).attributes["next_asr"]
+    )
+
+    assert test_time is not None
+
+    patched_time = test_time + timedelta(seconds=5)
+
+    with patch(
+        "homeassistant.helpers.condition.dt_util.utcnow", return_value=patched_time
+    ):
+        hass.bus.async_fire(ha.EVENT_TIME_CHANGED, {ha.ATTR_NOW: patched_time})
+        await hass.async_block_till_done()
+
+    assert hass.states.get(ENTITY_ID).state == "Asr"

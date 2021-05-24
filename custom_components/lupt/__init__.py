@@ -1,5 +1,7 @@
 """Main integration for lupt."""
 from homeassistant import core
+from homeassistant.core import callback
+from homeassistant.helpers import event
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import dt as dt_util
@@ -74,9 +76,17 @@ class Lupt(Entity):
         for prayer in self.times:
             self.calculate_next_prayer_time(prayer, dt)
 
-        self.calculate_prayer_time(dt)
+        self.update_prayer_time()
 
+    @callback
+    def update_prayer_time(self, now=None):
+        """Calculate current prayer, update state and set up next update."""
+        utc_point_in_time = dt_util.utcnow()
+        next_time = self.calculate_prayer_time(utc_point_in_time)
         self.async_write_ha_state()
+        event.async_track_point_in_utc_time(
+            self.hass, self.update_prayer_time, next_time
+        )
 
     @property
     def name(self):
@@ -115,7 +125,7 @@ class Lupt(Entity):
         formatted_prayer_time = lupt_report.perform_replace_strings(
             prayer, self.rs
         ).lower()
-        self._attrs[f"next_{formatted_prayer_time}"] = next_prayer[1]
+        self._attrs[f"next_{formatted_prayer_time}"] = next_prayer[1].isoformat()
 
     def calculate_prayer_time(self, dt):
         """Calculate current prayer."""
