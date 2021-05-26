@@ -1,4 +1,7 @@
 """Main integration for lupt."""
+from datetime import timedelta
+import logging
+
 from homeassistant import core
 from homeassistant.core import callback
 from homeassistant.helpers import event
@@ -28,14 +31,16 @@ from .const import (
     URL,
 )
 
+_LOGGER = logging.getLogger(__name__)
+
 CONFIG_SCHEMA
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
     url = config[DOMAIN][URL]
-    lupt = Lupt(hass)
-    await lupt.async_init(url)
+    lupt = Lupt(hass, url)
+    await lupt.async_init()
     return True
 
 
@@ -44,39 +49,55 @@ class Lupt(Entity):
 
     entity_id = ENTITY_ID
 
-    def __init__(self, hass):
+    def __init__(self, hass, url):
         """Initialise lupt."""
         self.hass = hass
+        self.url = url
         self.timetable = None
         self._state = None
         self._attrs = {}
         self.config = lupt_config.load_config(None)
-        self.times = None
-        self.rs = None
-
-    async def async_init(self, url):
-        """Initialise async part of lupt."""
-        try:
-            self.timetable = await self.hass.async_add_executor_job(
-                lambda: lupt_cache.init_timetable(HASS_TIMETABLE, url, self.config)
-            )
-        except Exception:
-            self.timetable = await self.hass.async_add_executor_job(
-                lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
-            )
-
         self.times = self.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
         self.rs = self.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
 
+    async def async_init(self):
+        """Initialise async part of lupt."""
         dt = dt_util.utcnow()
 
-        self.calculate_stats()
+        await self.update_timetable()
+
         self.calculate_islamic_date(dt)
 
         for prayer in self.times:
             self.calculate_next_prayer_time(prayer, dt)
 
         self.update_prayer_time()
+
+    async def update_timetable(self, now=None):
+        """Update timetable from remote."""
+        try:
+            _LOGGER.info(f"Initialising timetable from {self.url}.")
+            self.timetable = await self.hass.async_add_executor_job(
+                lambda: lupt_cache.init_timetable(HASS_TIMETABLE, self.url, self.config)
+            )
+        except Exception:
+            _LOGGER.info("Error initialising timetable. Trying to load local copy.")
+            self.timetable = await self.hass.async_add_executor_job(
+                lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
+            )
+
+        self.calculate_stats()
+        self.async_write_ha_state()
+
+        now = dt_util.now()
+        tomorrow = now + timedelta(days=1)
+        sod = dt_util.start_of_local_day(tomorrow)
+        next_time = sod + timedelta(minutes=15)
+        next_time_utc = dt_util.as_utc(next_time)
+
+        event.async_track_point_in_utc_time(
+            self.hass, self.update_timetable, next_time_utc
+        )
 
     @callback
     def update_prayer_time(self, now=None):

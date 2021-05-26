@@ -28,6 +28,12 @@ def create_utc_datetime(y, m, d, hh, mm):
     return pytz.utc.localize(datetime.datetime(y, m, d, hh, mm))
 
 
+def create_local_datetime(y, m, d, hh, mm):
+    """Create a simple UK time."""
+    uktz = pytz.timezone("Europe/London")
+    return datetime.datetime(y, m, d, hh, mm).astimezone(uktz)
+
+
 async def test_async_setup(hass, lupt_mock_good_load, config):
     """Test the component gets setup."""
     assert await async_setup_component(hass, DOMAIN, config) is True
@@ -143,3 +149,42 @@ async def test_state_change(hass, legacy_patchable_time, lupt_mock_good_load, co
         await hass.async_block_till_done()
 
     assert hass.states.get(ENTITY_ID).state == "Asr"
+
+
+async def test_midnight_refresh(
+    hass,
+    mocker,
+    legacy_patchable_time,
+    three_day_timetable,
+    three_day_timetable_later,
+    lupt_mock_good_load,
+    config,
+):
+    """Test timetable daily refresh."""
+    utc_now = create_local_datetime(2021, 10, 2, 23, 00)
+    with patch("homeassistant.helpers.condition.dt_util.utcnow", return_value=utc_now):
+        await async_setup_component(hass, DOMAIN, config)
+    await hass.async_block_till_done()
+    first_update = lupt_query.get_info(three_day_timetable)[3][0].isoformat()
+    later_update = lupt_query.get_info(three_day_timetable_later)[3][0].isoformat()
+    assert first_update != later_update
+    assert (
+        hass.states.get(ENTITY_ID).attributes[STATE_ATTR_LAST_UPDATED] == first_update
+    )
+
+    mocker.patch(
+        "custom_components.lupt.lupt_cache." + "init_timetable",
+        return_value=three_day_timetable_later,
+    )
+
+    patched_time = create_local_datetime(2021, 10, 3, 0, 15) + timedelta(seconds=5)
+
+    with patch(
+        "homeassistant.helpers.condition.dt_util.utcnow", return_value=patched_time
+    ):
+        hass.bus.async_fire(ha.EVENT_TIME_CHANGED, {ha.ATTR_NOW: patched_time})
+        await hass.async_block_till_done()
+
+    assert (
+        hass.states.get(ENTITY_ID).attributes[STATE_ATTR_LAST_UPDATED] == later_update
+    )

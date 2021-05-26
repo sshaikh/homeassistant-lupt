@@ -83,9 +83,21 @@ def three_day_timetable(three_unsorted_days):
 
 
 @pytest.fixture
+def three_day_timetable_later(three_unsorted_days):
+    """Create a mocked timetable."""
+    prayers_config = lupt_config.default_config
+    return timetable.build_timetable(
+        "pytest", "conftest.py", prayers_config, three_unsorted_days
+    )
+
+
+URL = "https://mock.location.com"
+
+
+@pytest.fixture
 def config():
     """Create a mocked hass config."""
-    return {"lupt": {"url": "https://mock.location.com"}}
+    return {"lupt": {"url": URL}}
 
 
 @pytest.fixture
@@ -121,7 +133,7 @@ def lupt_mock_bad_load(three_day_timetable, start_dt, mocker):
 @pytest.fixture
 def lupt_mock(hass, three_day_timetable, mocker):
     """Mock the loaded timetable."""
-    lupt = Lupt(hass)
+    lupt = Lupt(hass, URL)
     lupt.timetable = three_day_timetable
     lupt.times = lupt.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
     lupt.rs = lupt.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
