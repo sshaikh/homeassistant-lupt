@@ -6,7 +6,11 @@ import voluptuous as vol
 DOMAIN = "lupt"
 ENTITY_ID = "lupt.lupt"
 URL = "url"
-CONFIG_SCHEMA = vol.Schema({DOMAIN: {vol.Required(URL): cv.url}}, extra=vol.ALLOW_EXTRA)
+ZAWAAL_MINS = "zawaal_mins"
+CONFIG_SCHEMA = vol.Schema(
+    {DOMAIN: {vol.Required(URL): cv.url, vol.Required(ZAWAAL_MINS): cv.positive_int}},
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 tk = lupt_constants.TimetableKeys

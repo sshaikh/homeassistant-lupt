@@ -29,6 +29,7 @@ from .const import (
     STATE_ATTR_MIN_DATE,
     STATE_ATTR_NUM_DATES,
     URL,
+    ZAWAAL_MINS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,8 +39,7 @@ CONFIG_SCHEMA
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
-    url = config[DOMAIN][URL]
-    lupt = Lupt(hass, url)
+    lupt = Lupt(hass, config)
     await lupt.async_init()
     return True
 
@@ -49,10 +49,11 @@ class Lupt(Entity):
 
     entity_id = ENTITY_ID
 
-    def __init__(self, hass, url):
+    def __init__(self, hass, config):
         """Initialise lupt."""
         self.hass = hass
-        self.url = url
+        self.url = config[DOMAIN][URL]
+        self.zawaal_delta = timedelta(minutes=config[DOMAIN][ZAWAAL_MINS])
         self.timetable = None
         self._state = None
         self._attrs = {}
@@ -154,6 +155,14 @@ class Lupt(Entity):
         current_prayer = nandn[0][0]
         self._state = lupt_report.perform_replace_strings(current_prayer, self.rs)
 
+        next_time = nandn[1][1]
+
+        if self._state == "Sunrise":
+            if next_time - self.zawaal_delta <= dt:
+                self._state = "Zawaal"
+            else:
+                next_time = next_time - self.zawaal_delta
+
         self.calculate_next_prayer_time(current_prayer, dt)
 
-        return nandn[1][1]
+        return next_time

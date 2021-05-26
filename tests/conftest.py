@@ -97,7 +97,7 @@ URL = "https://mock.location.com"
 @pytest.fixture
 def config():
     """Create a mocked hass config."""
-    return {"lupt": {"url": URL}}
+    return {"lupt": {"url": URL, "zawaal_mins": 10}}
 
 
 @pytest.fixture
@@ -131,9 +131,9 @@ def lupt_mock_bad_load(three_day_timetable, start_dt, mocker):
 
 
 @pytest.fixture
-def lupt_mock(hass, three_day_timetable, mocker):
+def lupt_mock(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
-    lupt = Lupt(hass, URL)
+    lupt = Lupt(hass, config)
     lupt.timetable = three_day_timetable
     lupt.times = lupt.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
     lupt.rs = lupt.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]

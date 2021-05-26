@@ -49,10 +49,6 @@ def test_simple_properties(lupt_mock):
     assert lupt_mock.name == "London Unified Prayer Times"
 
 
-def test_extra_state_attributes(three_day_timetable, lupt_mock):
-    """Test extra state attrs."""
-
-
 def help_test_calc_state(lupt, dt, state, next_change):
     """Help match UTC with expected prayer state."""
     next_change_res = lupt.calculate_prayer_time(dt)
@@ -73,6 +69,18 @@ def test_calc_state(lupt_mock):
         create_utc_datetime(2021, 10, 2, 16, 0),
         "Asr",
         create_utc_datetime(2021, 10, 2, 17, 39),
+    )
+    help_test_calc_state(
+        lupt_mock,
+        create_utc_datetime(2021, 10, 2, 7, 15),
+        "Sunrise",
+        create_utc_datetime(2021, 10, 2, 11, 45),
+    )
+    help_test_calc_state(
+        lupt_mock,
+        create_utc_datetime(2021, 10, 2, 11, 50),
+        "Zawaal",
+        create_utc_datetime(2021, 10, 2, 11, 55),
     )
 
 
@@ -126,13 +134,18 @@ def test_calculate_next_prayer_time(lupt_mock):
     )
 
 
+def assert_state(hass, state):
+    """Help assert hass state."""
+    assert hass.states.get(ENTITY_ID).state == state
+
+
 async def test_state_change(hass, legacy_patchable_time, lupt_mock_good_load, config):
     """Test state updates on prayer time."""
     utc_now = create_utc_datetime(2021, 10, 2, 12, 00)
     with patch("homeassistant.helpers.condition.dt_util.utcnow", return_value=utc_now):
         await async_setup_component(hass, DOMAIN, config)
     await hass.async_block_till_done()
-    assert hass.states.get(ENTITY_ID).state == "Zuhr"
+    assert_state(hass, "Zuhr")
 
     test_time = dt_util.parse_datetime(
         hass.states.get(ENTITY_ID).attributes["next_asr"]
@@ -148,7 +161,7 @@ async def test_state_change(hass, legacy_patchable_time, lupt_mock_good_load, co
         hass.bus.async_fire(ha.EVENT_TIME_CHANGED, {ha.ATTR_NOW: patched_time})
         await hass.async_block_till_done()
 
-    assert hass.states.get(ENTITY_ID).state == "Asr"
+    assert_state(hass, "Asr")
 
 
 async def test_midnight_refresh(
