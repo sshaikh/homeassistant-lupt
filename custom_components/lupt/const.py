@@ -1,12 +1,16 @@
 """Constants for lupt."""
+import homeassistant.helpers.config_validation as cv
 from london_unified_prayer_times import constants as lupt_constants
+import voluptuous as vol
 
 DOMAIN = "lupt"
 ENTITY_ID = "lupt.lupt"
+URL = "url"
+CONFIG_SCHEMA = vol.Schema({DOMAIN: {vol.Required(URL): cv.url}}, extra=vol.ALLOW_EXTRA)
+
 
 tk = lupt_constants.TimetableKeys
 
-URL = "url"
 
 STATE_ATTR_LAST_UPDATED = tk.LAST_UPDATED.value
 STATE_ATTR_MIN_DATE = tk.MIN_DATE.value

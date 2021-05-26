@@ -2,7 +2,6 @@
 from homeassistant import core
 from homeassistant.core import callback
 from homeassistant.helpers import event
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import dt as dt_util
 from london_unified_prayer_times import (
@@ -12,9 +11,10 @@ from london_unified_prayer_times import (
     query as lupt_query,
     report as lupt_report,
 )
-import voluptuous as vol
 
 from .const import (
+    CONFIG_SCHEMA,
+    DOMAIN,
     ENTITY_ID,
     HASS_TIMETABLE,
     STATE_ATTR_ISLAMIC_DATE,
@@ -28,12 +28,12 @@ from .const import (
     URL,
 )
 
-CONFIG_SCHEMA = vol.Schema({vol.Required(URL): cv.url})
+CONFIG_SCHEMA
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
-    url = config[URL]
+    url = config[DOMAIN][URL]
     lupt = Lupt(hass)
     await lupt.async_init(url)
     return True

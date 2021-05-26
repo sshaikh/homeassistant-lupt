@@ -85,7 +85,7 @@ def three_day_timetable(three_unsorted_days):
 @pytest.fixture
 def config():
     """Create a mocked hass config."""
-    return {"url": "https://mock.location.com"}
+    return {"lupt": {"url": "https://mock.location.com"}}
 
 
 @pytest.fixture
