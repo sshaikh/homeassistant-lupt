@@ -5,6 +5,7 @@ import homeassistant.helpers.config_validation as cv
 from london_unified_prayer_times import constants as lupt_constants
 import voluptuous as vol
 
+NAME = "London Unified Prayer Times"
 DOMAIN = "lupt"
 ENTITY_ID = "lupt.lupt"
 URL = "url"
@@ -36,6 +37,10 @@ STATE_ATTR_ISLAMIC_DAY = "islamic_day"
 
 
 HASS_TIMETABLE = "homeassistant"
+
+SUNRISE_TIME_LABEL = "Sunrise"
+ZAWAAL_TIME_LABEL = "Zawaal"
+MAGHRIB_TIME_LABEL = "Maghrib Begins"
 
 
 class IslamicDateStrategy(Enum):

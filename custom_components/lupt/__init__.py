@@ -21,6 +21,8 @@ from .const import (
     ENTITY_ID,
     HASS_TIMETABLE,
     ISLAMIC_DATE_STRATEGY,
+    MAGHRIB_TIME_LABEL,
+    NAME,
     STATE_ATTR_ISLAMIC_DATE,
     STATE_ATTR_ISLAMIC_DAY,
     STATE_ATTR_ISLAMIC_MONTH,
@@ -29,8 +31,10 @@ from .const import (
     STATE_ATTR_MAX_DATE,
     STATE_ATTR_MIN_DATE,
     STATE_ATTR_NUM_DATES,
+    SUNRISE_TIME_LABEL,
     URL,
     ZAWAAL_MINS,
+    ZAWAAL_TIME_LABEL,
     IslamicDateStrategy,
 )
 
@@ -131,7 +135,7 @@ class Lupt(Entity):
     @property
     def name(self):
         """Friendly name."""
-        return "London Unified Prayer Times"
+        return NAME
 
     @property
     def state(self):
@@ -158,7 +162,7 @@ class Lupt(Entity):
         idate = None
 
         if self.islamic_date_strategy == IslamicDateStrategy.AT_MAGHRIB:
-            next_time = self.calculate_next_prayer_time("Maghrib Begins", dt)
+            next_time = self.calculate_next_prayer_time(MAGHRIB_TIME_LABEL, dt)
             idate = next_time.date()
         else:  # IslamicDateStrategy.AT_MIDNIGHT
             next_time = dt_util.start_of_local_day(dt) + timedelta(days=1)
@@ -190,10 +194,10 @@ class Lupt(Entity):
 
         next_time = nandn[1][1]
 
-        if current_prayer == "Sunrise":
+        if current_prayer == SUNRISE_TIME_LABEL:
             zawaal_time = next_time - self.zawaal_delta
             if zawaal_time <= dt:
-                self._state = "Zawaal"
+                self._state = ZAWAAL_TIME_LABEL
             else:
                 next_time = zawaal_time
 
