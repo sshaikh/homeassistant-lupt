@@ -22,6 +22,8 @@ from custom_components.lupt.const import (
     STATE_ATTR_NUM_DATES,
 )
 
+dt_util.set_default_time_zone(pytz.timezone("Europe/London"))
+
 
 def create_utc_datetime(y, m, d, hh, mm):
     """Create a simple UTC time."""
@@ -121,6 +123,18 @@ def test_calculate_islamic_date(lupt_mock):
             STATE_ATTR_ISLAMIC_DAY: 25,
         },
     )
+    help_test_calc_attrs(
+        lupt_mock,
+        lambda: lupt_mock.calculate_islamic_date(
+            create_utc_datetime(2021, 10, 2, 22, 0)
+        ),
+        {
+            STATE_ATTR_ISLAMIC_DATE: "25 Safar 1443",
+            STATE_ATTR_ISLAMIC_YEAR: 1443,
+            STATE_ATTR_ISLAMIC_MONTH: "Safar",
+            STATE_ATTR_ISLAMIC_DAY: 25,
+        },
+    )
 
 
 def test_calculate_next_prayer_time(lupt_mock):
@@ -164,6 +178,11 @@ async def test_state_change(hass, legacy_patchable_time, lupt_mock_good_load, co
     assert_state(hass, "Asr")
 
 
+def assert_attribute(hass, attribute, value):
+    """Help assert hass attrs."""
+    assert hass.states.get(ENTITY_ID).attributes[attribute] == value
+
+
 async def test_midnight_refresh(
     hass,
     mocker,
@@ -181,9 +200,7 @@ async def test_midnight_refresh(
     first_update = lupt_query.get_info(three_day_timetable)[3][0].isoformat()
     later_update = lupt_query.get_info(three_day_timetable_later)[3][0].isoformat()
     assert first_update != later_update
-    assert (
-        hass.states.get(ENTITY_ID).attributes[STATE_ATTR_LAST_UPDATED] == first_update
-    )
+    assert_attribute(hass, STATE_ATTR_LAST_UPDATED, first_update)
 
     mocker.patch(
         "custom_components.lupt.lupt_cache." + "init_timetable",
@@ -198,6 +215,25 @@ async def test_midnight_refresh(
         hass.bus.async_fire(ha.EVENT_TIME_CHANGED, {ha.ATTR_NOW: patched_time})
         await hass.async_block_till_done()
 
-    assert (
-        hass.states.get(ENTITY_ID).attributes[STATE_ATTR_LAST_UPDATED] == later_update
-    )
+    assert_attribute(hass, STATE_ATTR_LAST_UPDATED, later_update)
+
+
+async def test_idate_change(hass, legacy_patchable_time, lupt_mock_good_load, config):
+    """Test Islmaic date change."""
+    utc_now = create_utc_datetime(2021, 10, 2, 12, 00)
+    with patch("homeassistant.helpers.condition.dt_util.utcnow", return_value=utc_now):
+        await async_setup_component(hass, DOMAIN, config)
+    await hass.async_block_till_done()
+
+    assert_attribute(hass, STATE_ATTR_ISLAMIC_DATE, "25 Safar 1443")
+
+    patched_time = create_local_datetime(2021, 10, 3, 0, 0)
+    patched_time = patched_time + timedelta(seconds=5)
+
+    with patch(
+        "homeassistant.helpers.condition.dt_util.utcnow", return_value=patched_time
+    ):
+        hass.bus.async_fire(ha.EVENT_TIME_CHANGED, {ha.ATTR_NOW: patched_time})
+        await hass.async_block_till_done()
+
+    assert_attribute(hass, STATE_ATTR_ISLAMIC_DATE, "26 Safar 1443")

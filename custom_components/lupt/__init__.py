@@ -67,7 +67,7 @@ class Lupt(Entity):
 
         await self.update_timetable()
 
-        self.calculate_islamic_date(dt)
+        self.update_islamic_date()
 
         for prayer in self.times:
             self.calculate_next_prayer_time(prayer, dt)
@@ -110,6 +110,17 @@ class Lupt(Entity):
             self.hass, self.update_prayer_time, next_time
         )
 
+    @callback
+    def update_islamic_date(self, now=None):
+        """Calculate current idate, update state and set up next update."""
+        utc_point_in_time = dt_util.utcnow()
+        next_time = self.calculate_islamic_date(utc_point_in_time)
+        self.async_write_ha_state()
+        _LOGGER.info(f"Scheduling Islamic Date update for {next_time}")
+        event.async_track_point_in_utc_time(
+            self.hass, self.update_islamic_date, next_time
+        )
+
     @property
     def name(self):
         """Friendly name."""
@@ -140,6 +151,9 @@ class Lupt(Entity):
         self._attrs[STATE_ATTR_ISLAMIC_YEAR] = iyear
         self._attrs[STATE_ATTR_ISLAMIC_MONTH] = imonth
         self._attrs[STATE_ATTR_ISLAMIC_DAY] = iday
+        tomorrow = dt_util.start_of_local_day(dt) + timedelta(days=1)
+        tomorrow = dt_util.as_utc(tomorrow)
+        return tomorrow
 
     def calculate_next_prayer_time(self, prayer, dt):
         """Set up the next time for given prayer."""
