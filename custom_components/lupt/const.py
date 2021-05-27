@@ -1,4 +1,6 @@
 """Constants for lupt."""
+from enum import Enum
+
 import homeassistant.helpers.config_validation as cv
 from london_unified_prayer_times import constants as lupt_constants
 import voluptuous as vol
@@ -7,8 +9,15 @@ DOMAIN = "lupt"
 ENTITY_ID = "lupt.lupt"
 URL = "url"
 ZAWAAL_MINS = "zawaal_mins"
+ISLAMIC_DATE_STRATEGY = "islamic_date_at_maghrib"
 CONFIG_SCHEMA = vol.Schema(
-    {DOMAIN: {vol.Required(URL): cv.url, vol.Required(ZAWAAL_MINS): cv.positive_int}},
+    {
+        DOMAIN: {
+            vol.Required(URL): cv.url,
+            vol.Required(ZAWAAL_MINS): cv.positive_int,
+            vol.Required(ISLAMIC_DATE_STRATEGY): cv.boolean,
+        }
+    },
     extra=vol.ALLOW_EXTRA,
 )
 
@@ -27,3 +36,10 @@ STATE_ATTR_ISLAMIC_DAY = "islamic_day"
 
 
 HASS_TIMETABLE = "homeassistant"
+
+
+class IslamicDateStrategy(Enum):
+    """Islamic Date Strategy Options."""
+
+    AT_MIDNIGHT = "at_midnight"
+    AT_MAGHRIB = "at_maghrib"

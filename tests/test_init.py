@@ -86,11 +86,12 @@ def test_calc_state(lupt_mock):
     )
 
 
-def help_test_calc_attrs(lupt, f, attrs):
+def help_test_calc_attrs(lupt, f, attrs, next_change):
     """Help match UTC with expected prayer attrs."""
-    f()
+    change = f()
     for (k, v) in attrs.items():
         assert lupt.extra_state_attributes[k] == v
+    assert change == next_change
 
 
 def test_calculate_stats(lupt_mock):
@@ -106,10 +107,11 @@ def test_calculate_stats(lupt_mock):
             STATE_ATTR_MAX_DATE: "2021-10-03",
             STATE_ATTR_NUM_DATES: 3,
         },
+        None,
     )
 
 
-def test_calculate_islamic_date(lupt_mock):
+def test_calculate_islamic_date_change_on_midnight(lupt_mock):
     """Test Islamic Date."""
     help_test_calc_attrs(
         lupt_mock,
@@ -122,11 +124,29 @@ def test_calculate_islamic_date(lupt_mock):
             STATE_ATTR_ISLAMIC_MONTH: "Safar",
             STATE_ATTR_ISLAMIC_DAY: 25,
         },
+        create_utc_datetime(2021, 10, 2, 23, 0),
     )
     help_test_calc_attrs(
         lupt_mock,
         lambda: lupt_mock.calculate_islamic_date(
-            create_utc_datetime(2021, 10, 2, 22, 0)
+            create_utc_datetime(2021, 10, 3, 3, 0)
+        ),
+        {
+            STATE_ATTR_ISLAMIC_DATE: "26 Safar 1443",
+            STATE_ATTR_ISLAMIC_YEAR: 1443,
+            STATE_ATTR_ISLAMIC_MONTH: "Safar",
+            STATE_ATTR_ISLAMIC_DAY: 26,
+        },
+        create_utc_datetime(2021, 10, 3, 23, 0),
+    )
+
+
+def test_calculate_islamic_date_change_on_maghrib(lupt_mock_maghrib):
+    """Test Islamic Date changing on Maghrib."""
+    help_test_calc_attrs(
+        lupt_mock_maghrib,
+        lambda: lupt_mock_maghrib.calculate_islamic_date(
+            create_utc_datetime(2021, 10, 2, 12, 0)
         ),
         {
             STATE_ATTR_ISLAMIC_DATE: "25 Safar 1443",
@@ -134,6 +154,20 @@ def test_calculate_islamic_date(lupt_mock):
             STATE_ATTR_ISLAMIC_MONTH: "Safar",
             STATE_ATTR_ISLAMIC_DAY: 25,
         },
+        create_utc_datetime(2021, 10, 2, 17, 39),
+    )
+    help_test_calc_attrs(
+        lupt_mock_maghrib,
+        lambda: lupt_mock_maghrib.calculate_islamic_date(
+            create_utc_datetime(2021, 10, 2, 22, 0)
+        ),
+        {
+            STATE_ATTR_ISLAMIC_DATE: "26 Safar 1443",
+            STATE_ATTR_ISLAMIC_YEAR: 1443,
+            STATE_ATTR_ISLAMIC_MONTH: "Safar",
+            STATE_ATTR_ISLAMIC_DAY: 26,
+        },
+        create_utc_datetime(2021, 10, 3, 17, 36),
     )
 
 
@@ -145,6 +179,7 @@ def test_calculate_next_prayer_time(lupt_mock):
             "Zuhr Begins", create_utc_datetime(2021, 10, 2, 13, 0)
         ),
         {"next_zuhr": create_utc_datetime(2021, 10, 3, 11, 54).isoformat()},
+        create_utc_datetime(2021, 10, 3, 11, 54),
     )
 
 

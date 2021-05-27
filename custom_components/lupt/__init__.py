@@ -20,6 +20,7 @@ from .const import (
     DOMAIN,
     ENTITY_ID,
     HASS_TIMETABLE,
+    ISLAMIC_DATE_STRATEGY,
     STATE_ATTR_ISLAMIC_DATE,
     STATE_ATTR_ISLAMIC_DAY,
     STATE_ATTR_ISLAMIC_MONTH,
@@ -30,6 +31,7 @@ from .const import (
     STATE_ATTR_NUM_DATES,
     URL,
     ZAWAAL_MINS,
+    IslamicDateStrategy,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,6 +56,11 @@ class Lupt(Entity):
         self.hass = hass
         self.url = config[DOMAIN][URL]
         self.zawaal_delta = timedelta(minutes=config[DOMAIN][ZAWAAL_MINS])
+        self.islamic_date_strategy = (
+            IslamicDateStrategy.AT_MAGHRIB
+            if config[DOMAIN][ISLAMIC_DATE_STRATEGY]
+            else IslamicDateStrategy.AT_MIDNIGHT
+        )
         self.timetable = None
         self._state = None
         self._attrs = {}
@@ -146,14 +153,24 @@ class Lupt(Entity):
 
     def calculate_islamic_date(self, dt):
         """Set up Islamic Date."""
-        (iyear, imonth, iday) = lupt_query.get_islamic_date(self.timetable, dt.date())
+
+        next_time = None
+        idate = None
+
+        if self.islamic_date_strategy == IslamicDateStrategy.AT_MAGHRIB:
+            next_time = self.calculate_next_prayer_time("Maghrib Begins", dt)
+            idate = next_time.date()
+        else:  # IslamicDateStrategy.AT_MIDNIGHT
+            next_time = dt_util.start_of_local_day(dt) + timedelta(days=1)
+            idate = dt.date()
+
+        (iyear, imonth, iday) = lupt_query.get_islamic_date(self.timetable, idate)
         self._attrs[STATE_ATTR_ISLAMIC_DATE] = f"{iday} {imonth} {iyear}"
         self._attrs[STATE_ATTR_ISLAMIC_YEAR] = iyear
         self._attrs[STATE_ATTR_ISLAMIC_MONTH] = imonth
         self._attrs[STATE_ATTR_ISLAMIC_DAY] = iday
-        tomorrow = dt_util.start_of_local_day(dt) + timedelta(days=1)
-        tomorrow = dt_util.as_utc(tomorrow)
-        return tomorrow
+
+        return next_time
 
     def calculate_next_prayer_time(self, prayer, dt):
         """Set up the next time for given prayer."""
@@ -161,7 +178,9 @@ class Lupt(Entity):
         formatted_prayer_time = lupt_report.perform_replace_strings(
             prayer, self.rs
         ).lower()
-        self._attrs[f"next_{formatted_prayer_time}"] = next_prayer[1].isoformat()
+        next_time = next_prayer[1]
+        self._attrs[f"next_{formatted_prayer_time}"] = next_time.isoformat()
+        return next_time
 
     def calculate_prayer_time(self, dt):
         """Calculate current prayer."""
@@ -171,11 +190,12 @@ class Lupt(Entity):
 
         next_time = nandn[1][1]
 
-        if self._state == "Sunrise":
-            if next_time - self.zawaal_delta <= dt:
+        if current_prayer == "Sunrise":
+            zawaal_time = next_time - self.zawaal_delta
+            if zawaal_time <= dt:
                 self._state = "Zawaal"
             else:
-                next_time = next_time - self.zawaal_delta
+                next_time = zawaal_time
 
         self.calculate_next_prayer_time(current_prayer, dt)
 
