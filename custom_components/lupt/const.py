@@ -41,6 +41,7 @@ STATE_ATTR_ISLAMIC_DAY = "islamic_day"
 HASS_TIMETABLE = "homeassistant"
 
 SUNRISE_TIME_LABEL = "Sunrise"
+DUHA_STATE_LABEL = "Duha"
 ZAWAAL_TIME_LABEL = "Zawaal"
 MAGHRIB_TIME_LABEL = "Maghrib Begins"
 ASR_MITHL_1_LABEL = "Asr Mithl 1"

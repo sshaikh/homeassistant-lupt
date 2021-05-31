@@ -20,6 +20,7 @@ from .const import (
     ASR_MITHL_2_LABEL,
     CONFIG_SCHEMA,
     DOMAIN,
+    DUHA_STATE_LABEL,
     ENTITY_ID,
     HASS_TIMETABLE,
     ISLAMIC_DATE_STRATEGY,
@@ -225,6 +226,7 @@ class Lupt(Entity):
             if zawaal_time <= dt:
                 self._state = ZAWAAL_TIME_LABEL
             else:
+                self._state = DUHA_STATE_LABEL
                 next_time = zawaal_time
 
         self.calculate_next_prayer_time(current_prayer, dt)

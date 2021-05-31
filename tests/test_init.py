@@ -75,7 +75,7 @@ def test_calc_state(lupt_mock):
     help_test_calc_state(
         lupt_mock,
         create_utc_datetime(2021, 10, 2, 7, 15),
-        "Sunrise",
+        "Duha",
         create_utc_datetime(2021, 10, 2, 11, 45),
     )
     help_test_calc_state(
@@ -236,6 +236,16 @@ def test_calculate_asr_mithl_2(lupt_mock_mithl2):
         ),
         {"next_asr": create_utc_datetime(2021, 10, 3, 15, 39).isoformat()},
         create_utc_datetime(2021, 10, 2, 17, 39),
+    )
+
+
+def test_calculate_sunrise_gives_duha(lupt_mock):
+    """Test post-Sunrise state."""
+    help_test_calc_state(
+        lupt_mock,
+        create_utc_datetime(2021, 10, 2, 7, 0),
+        "Duha",
+        create_utc_datetime(2021, 10, 2, 11, 45),
     )
 
 
