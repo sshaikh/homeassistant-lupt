@@ -1,11 +1,7 @@
 """Fixtures for tests."""
 import datetime
 
-from london_unified_prayer_times import (
-    config as lupt_config,
-    constants as lupt_constants,
-    timetable,
-)
+from london_unified_prayer_times import config as lupt_config, timetable
 import pytest
 import pytz
 
@@ -76,7 +72,7 @@ def three_unsorted_days():
 @pytest.fixture
 def three_day_timetable(three_unsorted_days):
     """Create a mocked timetable."""
-    prayers_config = lupt_config.default_config
+    prayers_config = lupt_config.default_config()
     return timetable.build_timetable(
         "pytest", "conftest.py", prayers_config, three_unsorted_days
     )
@@ -85,7 +81,7 @@ def three_day_timetable(three_unsorted_days):
 @pytest.fixture
 def three_day_timetable_later(three_unsorted_days):
     """Create a mocked timetable."""
-    prayers_config = lupt_config.default_config
+    prayers_config = lupt_config.default_config()
     return timetable.build_timetable(
         "pytest", "conftest.py", prayers_config, three_unsorted_days
     )
@@ -97,7 +93,14 @@ URL = "https://mock.location.com"
 @pytest.fixture
 def config():
     """Create a mocked hass config."""
-    return {"lupt": {"url": URL, "zawaal_mins": 10, "islamic_date_at_maghrib": False}}
+    return {
+        "lupt": {
+            "url": URL,
+            "zawaal_mins": 10,
+            "islamic_date_at_maghrib": False,
+            "use_asr_mithl_2": False,
+        }
+    }
 
 
 @pytest.fixture
@@ -135,8 +138,6 @@ def lupt_mock(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
     lupt = Lupt(hass, config)
     lupt.timetable = three_day_timetable
-    lupt.times = lupt.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
-    lupt.rs = lupt.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
     return lupt
 
 
@@ -146,6 +147,13 @@ def lupt_mock_maghrib(hass, three_day_timetable, config, mocker):
     config["lupt"]["islamic_date_at_maghrib"] = True
     lupt = Lupt(hass, config)
     lupt.timetable = three_day_timetable
-    lupt.times = lupt.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
-    lupt.rs = lupt.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
+    return lupt
+
+
+@pytest.fixture
+def lupt_mock_mithl2(hass, three_day_timetable, config, mocker):
+    """Mock the loaded timetable."""
+    config["lupt"]["use_asr_mithl_2"] = True
+    lupt = Lupt(hass, config)
+    lupt.timetable = three_day_timetable
     return lupt

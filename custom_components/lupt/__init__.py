@@ -16,6 +16,8 @@ from london_unified_prayer_times import (
 )
 
 from .const import (
+    ASR_MITHL_1_LABEL,
+    ASR_MITHL_2_LABEL,
     CONFIG_SCHEMA,
     DOMAIN,
     ENTITY_ID,
@@ -33,6 +35,7 @@ from .const import (
     STATE_ATTR_NUM_DATES,
     SUNRISE_TIME_LABEL,
     URL,
+    USE_ASR_MITHL_2,
     ZAWAAL_MINS,
     ZAWAAL_TIME_LABEL,
     IslamicDateStrategy,
@@ -68,7 +71,14 @@ class Lupt(Entity):
         self.timetable = None
         self._state = None
         self._attrs = {}
-        self.config = lupt_config.load_config(None)
+        self.config = lupt_config.default_config()
+
+        if config[DOMAIN][USE_ASR_MITHL_2]:
+            self.config[lupt_constants.ConfigKeys.DEFAULT_TIMES] = [
+                ASR_MITHL_2_LABEL if x == ASR_MITHL_1_LABEL else x
+                for x in self.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
+            ]
+
         self.times = self.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
         self.rs = self.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
 
@@ -98,8 +108,6 @@ class Lupt(Entity):
                 lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
             )
 
-        dt = dt_util.utcnow()
-
         # Recalculate states in case new timetable has any corrections.
         # Really we should be able to reuse async_init, but
         # that would also set up new time triggers, resulting in
@@ -111,6 +119,7 @@ class Lupt(Entity):
         # to trigger or not (eg timetable update time). Only callbacks
         # for the current valid timetable will be actioned on etc.
 
+        dt = dt_util.utcnow()
         self.calculate_stats()
         self.calculate_islamic_date(dt)
         for prayer in self.times:

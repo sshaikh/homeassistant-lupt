@@ -11,12 +11,14 @@ ENTITY_ID = "lupt.lupt"
 URL = "url"
 ZAWAAL_MINS = "zawaal_mins"
 ISLAMIC_DATE_STRATEGY = "islamic_date_at_maghrib"
+USE_ASR_MITHL_2 = "use_asr_mithl_2"
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
             vol.Required(URL): cv.url,
             vol.Required(ZAWAAL_MINS): cv.positive_int,
             vol.Required(ISLAMIC_DATE_STRATEGY): cv.boolean,
+            vol.Required(USE_ASR_MITHL_2): cv.boolean,
         }
     },
     extra=vol.ALLOW_EXTRA,
@@ -41,6 +43,8 @@ HASS_TIMETABLE = "homeassistant"
 SUNRISE_TIME_LABEL = "Sunrise"
 ZAWAAL_TIME_LABEL = "Zawaal"
 MAGHRIB_TIME_LABEL = "Maghrib Begins"
+ASR_MITHL_1_LABEL = "Asr Mithl 1"
+ASR_MITHL_2_LABEL = "Asr Mithl 2"
 
 
 class IslamicDateStrategy(Enum):

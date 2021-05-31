@@ -183,6 +183,62 @@ def test_calculate_next_prayer_time(lupt_mock):
     )
 
 
+def test_calculate_asr_mithl_1(lupt_mock):
+    """Test two types of asr."""
+    help_test_calc_attrs(
+        lupt_mock,
+        lambda: lupt_mock.calculate_prayer_time(
+            create_utc_datetime(2021, 10, 2, 13, 00)
+        ),
+        {},
+        create_utc_datetime(2021, 10, 2, 14, 54),
+    )
+    help_test_calc_attrs(
+        lupt_mock,
+        lambda: lupt_mock.calculate_prayer_time(
+            create_utc_datetime(2021, 10, 2, 15, 00)
+        ),
+        {"next_asr": create_utc_datetime(2021, 10, 3, 14, 53).isoformat()},
+        create_utc_datetime(2021, 10, 2, 17, 39),
+    )
+    help_test_calc_attrs(
+        lupt_mock,
+        lambda: lupt_mock.calculate_prayer_time(
+            create_utc_datetime(2021, 10, 2, 16, 00)
+        ),
+        {"next_asr": create_utc_datetime(2021, 10, 3, 14, 53).isoformat()},
+        create_utc_datetime(2021, 10, 2, 17, 39),
+    )
+
+
+def test_calculate_asr_mithl_2(lupt_mock_mithl2):
+    """Test Asr Mithl 2 calculations."""
+    help_test_calc_attrs(
+        lupt_mock_mithl2,
+        lambda: lupt_mock_mithl2.calculate_prayer_time(
+            create_utc_datetime(2021, 10, 2, 13, 00)
+        ),
+        {},
+        create_utc_datetime(2021, 10, 2, 15, 41),
+    )
+    help_test_calc_attrs(
+        lupt_mock_mithl2,
+        lambda: lupt_mock_mithl2.calculate_prayer_time(
+            create_utc_datetime(2021, 10, 2, 15, 00)
+        ),
+        {},
+        create_utc_datetime(2021, 10, 2, 15, 41),
+    )
+    help_test_calc_attrs(
+        lupt_mock_mithl2,
+        lambda: lupt_mock_mithl2.calculate_prayer_time(
+            create_utc_datetime(2021, 10, 2, 16, 00)
+        ),
+        {"next_asr": create_utc_datetime(2021, 10, 3, 15, 39).isoformat()},
+        create_utc_datetime(2021, 10, 2, 17, 39),
+    )
+
+
 def assert_state(hass, state):
     """Help assert hass state."""
     assert hass.states.get(ENTITY_ID).state == state
