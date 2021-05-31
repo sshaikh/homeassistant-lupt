@@ -108,16 +108,16 @@ class Lupt(Entity):
                 lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
             )
 
-        # Recalculate states in case new timetable has any corrections.
-        # Really we should be able to reuse async_init, but
-        # that would also set up new time triggers, resulting in
-        # duplication.
+        # Recalculate states in case new timetable has any corrections. We should be
+        # able to reuse async_init, but that would also set up new time triggers,
+        # resulting in duplicated updates.
         #
-        # We should actually invalidate existing triggers if there's
-        # a chance they are now incorrect, but there's no cancellation
-        # method, so perhaps we could  use a cookie to check if we still want
-        # to trigger or not (eg timetable update time). Only callbacks
-        # for the current valid timetable will be actioned on etc.
+        # The correct solution is to invalidate existing triggers if there's a
+        # chance they are incorrect, but there doesn't appear to be a way to cancel
+        # future events. We should therefore use a cookie (eg timetable update time)
+        # or similar to check if we still want to trigger an event or not. Only
+        # callbacks for the current valid timetable would be actioned, and so out of
+        # date events would die out.
 
         dt = dt_util.utcnow()
         self.calculate_stats()
