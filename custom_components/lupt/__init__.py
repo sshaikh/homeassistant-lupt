@@ -98,7 +98,24 @@ class Lupt(Entity):
                 lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
             )
 
+        dt = dt_util.utcnow()
+
+        # Recalculate states in case new timetable has any corrections.
+        # Really we should be able to reuse async_init, but
+        # that would also set up new time triggers, resulting in
+        # duplication.
+        #
+        # We should actually invalidate existing triggers if there's
+        # a chance they are now incorrect, but there's no cancellation
+        # method, so perhaps we could  use a cookie to check if we still want
+        # to trigger or not (eg timetable update time). Only callbacks
+        # for the current valid timetable will be actioned on etc.
+
         self.calculate_stats()
+        self.calculate_islamic_date(dt)
+        for prayer in self.times:
+            self.calculate_next_prayer_time(prayer, dt)
+        self.calculate_prayer_time(dt)
         self.async_write_ha_state()
 
         now = dt_util.now()
