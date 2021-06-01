@@ -3,6 +3,7 @@ from datetime import timedelta
 import logging
 
 from homeassistant import core
+from homeassistant.const import EVENT_CORE_CONFIG_UPDATE
 from homeassistant.core import callback
 from homeassistant.helpers import event
 from homeassistant.helpers.entity import Entity
@@ -82,19 +83,24 @@ class Lupt(Entity):
 
         self.times = self.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
         self.rs = self.config[lupt_constants.ConfigKeys.DEFAULT_REPLACE_STRINGS]
+        self.unsub_timetable = None
+        self.unsub_prayer_time = None
+        self.unsub_islamic_date = None
 
     async def async_init(self):
         """Initialise async part of lupt."""
-        dt = dt_util.utcnow()
-
         await self.update_timetable()
 
-        self.update_islamic_date()
+        async def update_timetable_on_config(_event):
+            self.execute_if_defined(self.unsub_timetable)
+            self.update_timetable()
 
-        for prayer in self.times:
-            self.calculate_next_prayer_time(prayer, dt)
+        self.hass.bus.async_listen(EVENT_CORE_CONFIG_UPDATE, update_timetable_on_config)
 
-        self.update_prayer_time()
+    def execute_if_defined(self, func):
+        """Help run a function."""
+        if func:
+            func()
 
     async def update_timetable(self, now=None):
         """Update timetable from remote."""
@@ -109,24 +115,19 @@ class Lupt(Entity):
                 lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
             )
 
-        # Recalculate states in case new timetable has any corrections. We should be
-        # able to reuse async_init, but that would also set up new time triggers,
-        # resulting in duplicated updates.
-        #
-        # The correct solution is to invalidate existing triggers if there's a
-        # chance they are incorrect, but there doesn't appear to be a way to cancel
-        # future events. We should therefore use a cookie (eg timetable update time)
-        # or similar to check if we still want to trigger an event or not. Only
-        # callbacks for the current valid timetable would be actioned, and so out of
-        # date events would die out.
+        self.calculate_stats()
 
         dt = dt_util.utcnow()
-        self.calculate_stats()
-        self.calculate_islamic_date(dt)
         for prayer in self.times:
             self.calculate_next_prayer_time(prayer, dt)
-        self.calculate_prayer_time(dt)
+
         self.async_write_ha_state()
+
+        self.execute_if_defined(self.unsub_prayer_time)
+        self.update_prayer_time()
+
+        self.execute_if_defined(self.unsub_islamic_date)
+        self.update_islamic_date()
 
         now = dt_util.now()
         tomorrow = now + timedelta(days=1)
@@ -134,7 +135,7 @@ class Lupt(Entity):
         next_time = sod + timedelta(minutes=15)
         next_time_utc = dt_util.as_utc(next_time)
 
-        event.async_track_point_in_utc_time(
+        self.unsub_timetable = event.async_track_point_in_utc_time(
             self.hass, self.update_timetable, next_time_utc
         )
 
@@ -144,7 +145,7 @@ class Lupt(Entity):
         utc_point_in_time = dt_util.utcnow()
         next_time = self.calculate_prayer_time(utc_point_in_time)
         self.async_write_ha_state()
-        event.async_track_point_in_utc_time(
+        self.unsub_prayer_time = event.async_track_point_in_utc_time(
             self.hass, self.update_prayer_time, next_time
         )
 
@@ -155,7 +156,7 @@ class Lupt(Entity):
         next_time = self.calculate_islamic_date(utc_point_in_time)
         self.async_write_ha_state()
         _LOGGER.info(f"Scheduling Islamic Date update for {next_time}")
-        event.async_track_point_in_utc_time(
+        self.unsub_islamic_date = event.async_track_point_in_utc_time(
             self.hass, self.update_islamic_date, next_time
         )
 
