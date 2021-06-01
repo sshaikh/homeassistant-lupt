@@ -93,7 +93,7 @@ class Lupt(Entity):
 
         async def update_timetable_on_config(_event):
             self.execute_if_defined(self.unsub_timetable)
-            self.update_timetable()
+            await self.update_timetable()
 
         self.hass.bus.async_listen(EVENT_CORE_CONFIG_UPDATE, update_timetable_on_config)
 
