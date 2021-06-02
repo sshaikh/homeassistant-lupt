@@ -3,7 +3,6 @@ from datetime import timedelta
 import logging
 
 from homeassistant import core
-from homeassistant.const import EVENT_CORE_CONFIG_UPDATE
 from homeassistant.core import callback
 from homeassistant.helpers import event
 from homeassistant.helpers.entity import Entity
@@ -90,12 +89,6 @@ class Lupt(Entity):
     async def async_init(self):
         """Initialise async part of lupt."""
         await self.update_timetable()
-
-        async def update_timetable_on_config(_event):
-            self.execute_if_defined(self.unsub_timetable)
-            await self.update_timetable()
-
-        self.hass.bus.async_listen(EVENT_CORE_CONFIG_UPDATE, update_timetable_on_config)
 
     def execute_if_defined(self, func):
         """Help run a function."""
