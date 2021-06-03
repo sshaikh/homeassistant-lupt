@@ -88,6 +88,7 @@ class Lupt(Entity):
 
     async def async_init(self):
         """Initialise async part of lupt."""
+        self.execute_if_defined(self.unsub_timetable)
         await self.update_timetable()
 
     def execute_if_defined(self, func):
@@ -128,6 +129,7 @@ class Lupt(Entity):
         next_time = sod + timedelta(minutes=15)
         next_time_utc = dt_util.as_utc(next_time)
 
+        self.execute_if_defined(self.unsub_timetable)
         self.unsub_timetable = event.async_track_point_in_utc_time(
             self.hass, self.update_timetable, next_time_utc
         )
