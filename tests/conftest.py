@@ -1,6 +1,7 @@
 """Fixtures for tests."""
 import datetime
 
+from homeassistant.core import callback
 from london_unified_prayer_times import config as lupt_config, timetable
 import pytest
 import pytz
@@ -157,3 +158,18 @@ def lupt_mock_mithl2(hass, three_day_timetable, config, mocker):
     lupt = Lupt(hass, config)
     set_cached_timetable(three_day_timetable)
     return lupt
+
+
+@pytest.fixture
+def calls(hass):
+    """Set up a fake service & return a calls log list to this service."""
+    calls = []
+
+    @callback
+    def mock_service_log(call):
+        """Mock service call."""
+        calls.append(call)
+
+    hass.services.async_register("test", "automation", mock_service_log, schema=None)
+
+    return calls
