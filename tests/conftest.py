@@ -5,7 +5,7 @@ from london_unified_prayer_times import config as lupt_config, timetable
 import pytest
 import pytz
 
-from custom_components.lupt import Lupt
+from custom_components.lupt import Lupt, set_cached_timetable
 
 
 @pytest.fixture
@@ -137,7 +137,7 @@ def lupt_mock_bad_load(three_day_timetable, start_dt, mocker):
 def lupt_mock(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
     lupt = Lupt(hass, config)
-    lupt.timetable = three_day_timetable
+    set_cached_timetable(three_day_timetable)
     return lupt
 
 
@@ -146,7 +146,7 @@ def lupt_mock_maghrib(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
     config["lupt"]["islamic_date_at_maghrib"] = True
     lupt = Lupt(hass, config)
-    lupt.timetable = three_day_timetable
+    set_cached_timetable(three_day_timetable)
     return lupt
 
 
@@ -155,5 +155,5 @@ def lupt_mock_mithl2(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
     config["lupt"]["use_asr_mithl_2"] = True
     lupt = Lupt(hass, config)
-    lupt.timetable = three_day_timetable
+    set_cached_timetable(three_day_timetable)
     return lupt

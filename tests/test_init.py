@@ -9,6 +9,7 @@ import homeassistant.util.dt as dt_util
 from london_unified_prayer_times import query as lupt_query
 import pytz
 
+from custom_components.lupt import get_cached_timetable, set_cached_timetable
 from custom_components.lupt.const import (
     DOMAIN,
     ENTITY_ID,
@@ -44,6 +45,13 @@ async def test_async_setup(hass, lupt_mock_good_load, config):
 async def test_async_setup_no_load(hass, lupt_mock_bad_load, config):
     """Test the component gets setup when no existing timetable."""
     assert await async_setup_component(hass, DOMAIN, config) is True
+
+
+def test_get_cached_timetable(three_day_timetable):
+    """Test timetable cache functions."""
+    set_cached_timetable(three_day_timetable)
+    cached = get_cached_timetable()
+    assert cached == three_day_timetable
 
 
 def test_simple_properties(lupt_mock):
@@ -100,7 +108,7 @@ def test_calculate_stats(lupt_mock):
         lupt_mock,
         lupt_mock.calculate_stats,
         {
-            STATE_ATTR_LAST_UPDATED: lupt_query.get_info(lupt_mock.timetable)[3][
+            STATE_ATTR_LAST_UPDATED: lupt_query.get_info(get_cached_timetable())[3][
                 0
             ].isoformat(),
             STATE_ATTR_MIN_DATE: "2021-10-01",

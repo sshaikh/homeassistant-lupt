@@ -46,12 +46,25 @@ _LOGGER = logging.getLogger(__name__)
 
 CONFIG_SCHEMA
 
+cached_timetable = None
+
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
     lupt = Lupt(hass, config)
     await lupt.async_init()
     return True
+
+
+def get_cached_timetable():
+    """Get the cached timetable."""
+    return cached_timetable
+
+
+def set_cached_timetable(timetable):
+    """Set the cached timetable."""
+    global cached_timetable
+    cached_timetable = timetable
 
 
 class Lupt(Entity):
@@ -69,7 +82,6 @@ class Lupt(Entity):
             if config[DOMAIN][ISLAMIC_DATE_STRATEGY]
             else IslamicDateStrategy.AT_MIDNIGHT
         )
-        self.timetable = None
         self._state = None
         self._attrs = {}
         self.config = lupt_config.default_config()
@@ -100,14 +112,16 @@ class Lupt(Entity):
         """Update timetable from remote."""
         try:
             _LOGGER.info(f"Initialising timetable from {self.url}.")
-            self.timetable = await self.hass.async_add_executor_job(
+            temp_timetable = await self.hass.async_add_executor_job(
                 lambda: lupt_cache.init_timetable(HASS_TIMETABLE, self.url, self.config)
             )
         except Exception:
             _LOGGER.info("Error initialising timetable. Trying to load local copy.")
-            self.timetable = await self.hass.async_add_executor_job(
+            temp_timetable = await self.hass.async_add_executor_job(
                 lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
             )
+
+        set_cached_timetable(temp_timetable)
 
         self.calculate_stats()
 
@@ -173,7 +187,7 @@ class Lupt(Entity):
 
     def calculate_stats(self):
         """Set up statistics."""
-        info = lupt_query.get_info(self.timetable)
+        info = lupt_query.get_info(get_cached_timetable())
         self._attrs[STATE_ATTR_LAST_UPDATED] = info[3][0].isoformat()
         self._attrs[STATE_ATTR_MIN_DATE] = info[2][1].isoformat()
         self._attrs[STATE_ATTR_MAX_DATE] = info[2][2].isoformat()
@@ -192,7 +206,9 @@ class Lupt(Entity):
             next_time = dt_util.start_of_local_day(dt) + timedelta(days=1)
             idate = dt.date()
 
-        (iyear, imonth, iday) = lupt_query.get_islamic_date(self.timetable, idate)
+        (iyear, imonth, iday) = lupt_query.get_islamic_date(
+            get_cached_timetable(), idate
+        )
         self._attrs[STATE_ATTR_ISLAMIC_DATE] = f"{iday} {imonth} {iyear}"
         self._attrs[STATE_ATTR_ISLAMIC_YEAR] = iyear
         self._attrs[STATE_ATTR_ISLAMIC_MONTH] = imonth
@@ -202,7 +218,9 @@ class Lupt(Entity):
 
     def calculate_next_prayer_time(self, prayer, dt):
         """Set up the next time for given prayer."""
-        next_prayer = lupt_query.get_now_and_next(self.timetable, [prayer], dt)[1]
+        next_prayer = lupt_query.get_now_and_next(get_cached_timetable(), [prayer], dt)[
+            1
+        ]
         formatted_prayer_time = lupt_report.perform_replace_strings(
             prayer, self.rs
         ).lower()
@@ -212,7 +230,7 @@ class Lupt(Entity):
 
     def calculate_prayer_time(self, dt):
         """Calculate current prayer."""
-        nandn = lupt_query.get_now_and_next(self.timetable, self.times, dt)
+        nandn = lupt_query.get_now_and_next(get_cached_timetable(), self.times, dt)
         current_prayer = nandn[0][0]
         self._state = lupt_report.perform_replace_strings(current_prayer, self.rs)
 
