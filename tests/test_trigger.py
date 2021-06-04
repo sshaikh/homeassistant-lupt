@@ -130,7 +130,7 @@ async def test_track_event(hass, legacy_patchable_time, lupt_mock):
 
 async def test_event_trigger(hass, calls, legacy_patchable_time, lupt_mock):
     """Test the event trigger."""
-    now = create_utc_datetime(2021, 10, 2, 5, 0)
+    now = create_utc_datetime(2021, 10, 2, 3, 0)
     trigger_time = create_utc_datetime(2021, 10, 2, 9, 0)
 
     with patch("homeassistant.util.dt.utcnow", return_value=now):
@@ -139,7 +139,7 @@ async def test_event_trigger(hass, calls, legacy_patchable_time, lupt_mock):
             automation.DOMAIN,
             {
                 automation.DOMAIN: {
-                    "trigger": {"platform": "lupt", "event": "Sunrise"},
+                    "trigger": {"platform": "lupt", "event": "Fajr Begins"},
                     "action": {
                         "service": "test.automation",
                         "data_template": {"id": "{{ trigger.id}}"},
@@ -175,7 +175,7 @@ async def test_event_trigger(hass, calls, legacy_patchable_time, lupt_mock):
 
 async def test_event_trigger_with_offset(hass, calls, legacy_patchable_time, lupt_mock):
     """Test the event trigger with offset."""
-    now = create_utc_datetime(2021, 10, 2, 5, 0)
+    now = create_utc_datetime(2021, 10, 2, 3, 0)
     trigger_time = create_utc_datetime(2021, 10, 2, 9, 0)
 
     with patch("homeassistant.util.dt.utcnow", return_value=now):
@@ -186,7 +186,7 @@ async def test_event_trigger_with_offset(hass, calls, legacy_patchable_time, lup
                 automation.DOMAIN: {
                     "trigger": {
                         "platform": "lupt",
-                        "event": "Sunrise",
+                        "event": "Fajr Jamā'ah",
                         "offset": "0:30:00",
                     },
                     "action": {
@@ -203,4 +203,4 @@ async def test_event_trigger_with_offset(hass, calls, legacy_patchable_time, lup
     await async_fire_time(hass, trigger_time)
     await hass.async_block_till_done()
     assert len(calls) == 1
-    assert calls[0].data["some"] == "lupt - Sunrise - 0:30:00"
+    assert calls[0].data["some"] == "lupt - Fajr Jamā'ah - 0:30:00"
