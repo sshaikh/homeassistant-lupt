@@ -173,3 +173,34 @@ def calls(hass):
     hass.services.async_register("test", "automation", mock_service_log, schema=None)
 
     return calls
+
+
+@pytest.fixture
+def config_flow_good_remote(three_day_timetable, mocker):
+    """Mock lupt functions."""
+    mocker.patch(
+        "custom_components.lupt.config_flow.remote_data." + "get_html_data",
+        return_value={},
+    )
+    mocker.patch(
+        "custom_components.lupt.config_flow.timetable." + "build_timetable",
+        return_value=three_day_timetable,
+    )
+
+
+@pytest.fixture
+def config_flow_bad_remote(three_day_timetable, mocker):
+    """Mock lupt functions."""
+    mocker.patch(
+        "custom_components.lupt.config_flow.remote_data." + "get_html_data",
+        side_effect=Exception,
+    )
+
+
+@pytest.fixture
+def config_flow_bad_validate(mocker):
+    """Mock a bad validation."""
+    mocker.patch(
+        "custom_components.lupt.config_flow.validate_url",
+        side_effect=ValueError,
+    )

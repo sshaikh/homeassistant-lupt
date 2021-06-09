@@ -1,6 +1,6 @@
 {
   "codeowners": ["@sshaikh"],
-  "config_flow": false,
+  "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/sshaikh/homeassistant-lupt",
   "domain": "lupt",

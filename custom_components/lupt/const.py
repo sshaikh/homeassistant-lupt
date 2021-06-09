@@ -9,10 +9,11 @@ NAME = "London Unified Prayer Times"
 DOMAIN = "lupt"
 ENTITY_ID = "lupt.lupt"
 URL = "url"
+HTML_CLASS = "html_table_css_class"
 ZAWAAL_MINS = "zawaal_mins"
 ISLAMIC_DATE_STRATEGY = "islamic_date_at_maghrib"
 USE_ASR_MITHL_2 = "use_asr_mithl_2"
-CONFIG_SCHEMA = vol.Schema(
+xCONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
             vol.Required(URL): cv.url,
@@ -24,6 +25,17 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+
+CONFIG_SCHEMA = vol.Schema(
+    {
+        vol.Required(URL): cv.string,
+        vol.Optional(HTML_CLASS, default=""): cv.string,
+        vol.Required(ZAWAAL_MINS, default=10): cv.positive_int,
+        vol.Required(ISLAMIC_DATE_STRATEGY, default=False): cv.boolean,
+        vol.Required(USE_ASR_MITHL_2, default=False): cv.boolean,
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 tk = lupt_constants.TimetableKeys
 

@@ -3,6 +3,7 @@ from datetime import timedelta
 import logging
 
 from homeassistant import core
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback
 from homeassistant.helpers import event
 from homeassistant.helpers.entity import Entity
@@ -18,7 +19,6 @@ from london_unified_prayer_times import (
 from .const import (
     ASR_MITHL_1_LABEL,
     ASR_MITHL_2_LABEL,
-    CONFIG_SCHEMA,
     DOMAIN,
     DUHA_STATE_LABEL,
     ENTITY_ID,
@@ -44,14 +44,19 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-CONFIG_SCHEMA
-
 cached_timetable = None
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
     lupt = Lupt(hass, config)
+    await lupt.async_init()
+    return True
+
+
+async def async_setup_entry(hass: core.HomeAssistant, entry: ConfigEntry) -> bool:
+    """Set up the London Unified Prayer Times component from a config entry."""
+    lupt = Lupt(hass, {DOMAIN: entry.data})
     await lupt.async_init()
     return True
 

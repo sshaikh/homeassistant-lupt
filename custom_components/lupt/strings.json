@@ -1,0 +1,24 @@
+{
+	"config": {
+		"step": {
+			"user": {
+				"title": "London Unified Prayer Times",
+				"description": "Welcome to LUPT! Please refer to the documentation to understand the settings below",
+				"data": {
+					"url": "URL to prayer times",
+					"html_table_css_class": "Leave blank unless instructed otherwise",
+					"zawaal_mins": "Positive number of minutes before Zuhr that Zawaal begins",
+					"islamic_date_at_maghrib": "Switch Islamic Date at Maghrib instead of midnight",
+					"use_asr_mithl_2": "Use Mithl 2 for Asr instead of Mithl 1"
+				}
+			}
+		}
+	},
+	"error": {
+		"cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+		"unknown": "[%key:common::config_flow::error::unknown%]"
+	},
+	"abort": {
+		"already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+	}
+}
