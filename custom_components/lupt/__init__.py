@@ -19,6 +19,7 @@ from london_unified_prayer_times import (
 from .const import (
     ASR_MITHL_1_LABEL,
     ASR_MITHL_2_LABEL,
+    CACHED_KEY,
     DOMAIN,
     DUHA_STATE_LABEL,
     ENTITY_ID,
@@ -44,11 +45,10 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-cached_timetable = None
-
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
+    hass.data.setdefault(DOMAIN, {})
     lupt = Lupt(hass, config)
     await lupt.async_init()
     return True
@@ -59,17 +59,6 @@ async def async_setup_entry(hass: core.HomeAssistant, entry: ConfigEntry) -> boo
     lupt = Lupt(hass, {DOMAIN: entry.data})
     await lupt.async_init()
     return True
-
-
-def get_cached_timetable():
-    """Get the cached timetable."""
-    return cached_timetable
-
-
-def set_cached_timetable(timetable):
-    """Set the cached timetable."""
-    global cached_timetable
-    cached_timetable = timetable
 
 
 class Lupt(Entity):
@@ -108,6 +97,14 @@ class Lupt(Entity):
         self.execute_if_defined(self.unsub_timetable)
         await self.update_timetable()
 
+    def get_cached_timetable(self):
+        """Get the cached timetable."""
+        return self.hass.data[DOMAIN][CACHED_KEY]
+
+    def set_cached_timetable(self, timetable):
+        """Set the cached timetable."""
+        self.hass.data[DOMAIN][CACHED_KEY] = timetable
+
     def execute_if_defined(self, func):
         """Help run a function."""
         if func:
@@ -126,7 +123,7 @@ class Lupt(Entity):
                 lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
             )
 
-        set_cached_timetable(temp_timetable)
+        self.set_cached_timetable(temp_timetable)
 
         self.calculate_stats()
 
@@ -192,7 +189,7 @@ class Lupt(Entity):
 
     def calculate_stats(self):
         """Set up statistics."""
-        info = lupt_query.get_info(get_cached_timetable())
+        info = lupt_query.get_info(self.get_cached_timetable())
         self._attrs[STATE_ATTR_LAST_UPDATED] = info[3][0].isoformat()
         self._attrs[STATE_ATTR_MIN_DATE] = info[2][1].isoformat()
         self._attrs[STATE_ATTR_MAX_DATE] = info[2][2].isoformat()
@@ -212,7 +209,7 @@ class Lupt(Entity):
             idate = dt.date()
 
         (iyear, imonth, iday) = lupt_query.get_islamic_date(
-            get_cached_timetable(), idate
+            self.get_cached_timetable(), idate
         )
         self._attrs[STATE_ATTR_ISLAMIC_DATE] = f"{iday} {imonth} {iyear}"
         self._attrs[STATE_ATTR_ISLAMIC_YEAR] = iyear
@@ -223,9 +220,9 @@ class Lupt(Entity):
 
     def calculate_next_prayer_time(self, prayer, dt):
         """Set up the next time for given prayer."""
-        next_prayer = lupt_query.get_now_and_next(get_cached_timetable(), [prayer], dt)[
-            1
-        ]
+        next_prayer = lupt_query.get_now_and_next(
+            self.get_cached_timetable(), [prayer], dt
+        )[1]
         formatted_prayer_time = lupt_report.perform_replace_strings(
             prayer, self.rs
         ).lower()
@@ -235,7 +232,7 @@ class Lupt(Entity):
 
     def calculate_prayer_time(self, dt):
         """Calculate current prayer."""
-        nandn = lupt_query.get_now_and_next(get_cached_timetable(), self.times, dt)
+        nandn = lupt_query.get_now_and_next(self.get_cached_timetable(), self.times, dt)
         current_prayer = nandn[0][0]
         self._state = lupt_report.perform_replace_strings(current_prayer, self.rs)
 

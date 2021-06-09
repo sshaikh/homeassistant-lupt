@@ -40,10 +40,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(title=NAME, data=user_input)
             except UrlValueError:
                 print("url error")
-                errors["base"] = "cannot_connect"
+                errors[URL] = "cannot_connect"
             except Exception:
                 print("other error")
-                errors["base"] = "unknown"
+                errors[URL] = "unknown"
 
         print(f"returning {errors}")
         return self.async_show_form(

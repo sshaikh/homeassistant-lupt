@@ -54,4 +54,4 @@ async def test_bad_url(hass):
         _result["flow_id"], user_input={URL: bad_url}
     )
 
-    assert result["errors"] == {"base": "cannot_connect"}
+    assert result["errors"] == {URL: "cannot_connect"}

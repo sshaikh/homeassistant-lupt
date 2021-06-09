@@ -6,7 +6,8 @@ from london_unified_prayer_times import config as lupt_config, timetable
 import pytest
 import pytz
 
-from custom_components.lupt import Lupt, set_cached_timetable
+from custom_components.lupt import Lupt
+from custom_components.lupt.const import DOMAIN
 
 
 @pytest.fixture
@@ -134,30 +135,32 @@ def lupt_mock_bad_load(three_day_timetable, start_dt, mocker):
     mocker.patch("custom_components.lupt.dt_util.utcnow", return_value=start_dt)
 
 
-@pytest.fixture
-def lupt_mock(hass, three_day_timetable, config, mocker):
-    """Mock the loaded timetable."""
+def set_up_mock(hass, three_day_timetable, config):
+    """Set up a mocked lupt."""
+    hass.data.setdefault(DOMAIN, {})
     lupt = Lupt(hass, config)
-    set_cached_timetable(three_day_timetable)
+    lupt.set_cached_timetable(three_day_timetable)
     return lupt
+
+
+@pytest.fixture
+def lupt_mock(hass, three_day_timetable, config):
+    """Mock the loaded timetable."""
+    return set_up_mock(hass, three_day_timetable, config)
 
 
 @pytest.fixture
 def lupt_mock_maghrib(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
     config["lupt"]["islamic_date_at_maghrib"] = True
-    lupt = Lupt(hass, config)
-    set_cached_timetable(three_day_timetable)
-    return lupt
+    return set_up_mock(hass, three_day_timetable, config)
 
 
 @pytest.fixture
 def lupt_mock_mithl2(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
     config["lupt"]["use_asr_mithl_2"] = True
-    lupt = Lupt(hass, config)
-    set_cached_timetable(three_day_timetable)
-    return lupt
+    return set_up_mock(hass, three_day_timetable, config)
 
 
 @pytest.fixture

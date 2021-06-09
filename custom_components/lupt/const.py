@@ -13,18 +13,7 @@ HTML_CLASS = "html_table_css_class"
 ZAWAAL_MINS = "zawaal_mins"
 ISLAMIC_DATE_STRATEGY = "islamic_date_at_maghrib"
 USE_ASR_MITHL_2 = "use_asr_mithl_2"
-xCONFIG_SCHEMA = vol.Schema(
-    {
-        DOMAIN: {
-            vol.Required(URL): cv.url,
-            vol.Required(ZAWAAL_MINS): cv.positive_int,
-            vol.Required(ISLAMIC_DATE_STRATEGY): cv.boolean,
-            vol.Required(USE_ASR_MITHL_2): cv.boolean,
-        }
-    },
-    extra=vol.ALLOW_EXTRA,
-)
-
+CACHED_KEY = "cached_timetable"
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -34,7 +23,6 @@ CONFIG_SCHEMA = vol.Schema(
         vol.Required(ISLAMIC_DATE_STRATEGY, default=False): cv.boolean,
         vol.Required(USE_ASR_MITHL_2, default=False): cv.boolean,
     },
-    extra=vol.ALLOW_EXTRA,
 )
 
 tk = lupt_constants.TimetableKeys

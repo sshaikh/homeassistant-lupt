@@ -10,8 +10,7 @@ from homeassistant.util import dt as dt_util
 from london_unified_prayer_times import query as lupt_query
 import voluptuous as vol
 
-from . import get_cached_timetable
-from .const import DOMAIN
+from .const import CACHED_KEY, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -67,6 +66,10 @@ class LuptListener:
         self.offset = offset
         self._unsub = None
 
+    def get_cached_timetable(self):
+        """Retrieve cached timetable from hass."""
+        return self.hass.data[DOMAIN][CACHED_KEY]
+
     @callback
     def async_attach(self) -> None:
         """Attach listener."""
@@ -84,7 +87,7 @@ class LuptListener:
         """Calculate the next trigger time."""
         original_event_time = dt - self.offset
         nandn = lupt_query.get_now_and_next(
-            get_cached_timetable(), [self.event], original_event_time
+            self.get_cached_timetable(), [self.event], original_event_time
         )
         next_time = nandn[1][1] + self.offset
         return next_time
