@@ -90,7 +90,7 @@ class LuptListener:
             self.get_cached_timetable(), [self.event], original_event_time
         )
         next_time = nandn[1][1] + self.offset
-        return next_time
+        return dt_util.as_utc(next_time)
 
     @callback
     def _listen_next_event(self) -> None:
