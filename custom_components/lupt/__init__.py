@@ -49,14 +49,12 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
     """Set up the London Unified Prayer Times component."""
     hass.data.setdefault(DOMAIN, {})
-    lupt = Lupt(hass, config)
-    await lupt.async_init()
     return True
 
 
 async def async_setup_entry(hass: core.HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up the London Unified Prayer Times component from a config entry."""
-    lupt = Lupt(hass, {DOMAIN: entry.data})
+    lupt = Lupt(hass, entry.data)
     await lupt.async_init()
     return True
 
@@ -69,18 +67,18 @@ class Lupt(Entity):
     def __init__(self, hass, config):
         """Initialise lupt."""
         self.hass = hass
-        self.url = config[DOMAIN][URL]
-        self.zawaal_delta = timedelta(minutes=config[DOMAIN][ZAWAAL_MINS])
+        self.url = config[URL]
+        self.zawaal_delta = timedelta(minutes=config[ZAWAAL_MINS])
         self.islamic_date_strategy = (
             IslamicDateStrategy.AT_MAGHRIB
-            if config[DOMAIN][ISLAMIC_DATE_STRATEGY]
+            if config[ISLAMIC_DATE_STRATEGY]
             else IslamicDateStrategy.AT_MIDNIGHT
         )
         self._state = None
         self._attrs = {}
         self.config = lupt_config.default_config()
 
-        if config[DOMAIN][USE_ASR_MITHL_2]:
+        if config[USE_ASR_MITHL_2]:
             self.config[lupt_constants.ConfigKeys.DEFAULT_TIMES] = [
                 ASR_MITHL_2_LABEL if x == ASR_MITHL_1_LABEL else x
                 for x in self.config[lupt_constants.ConfigKeys.DEFAULT_TIMES]
@@ -205,7 +203,8 @@ class Lupt(Entity):
             next_time = self.calculate_next_prayer_time(MAGHRIB_TIME_LABEL, dt)
             idate = next_time.date()
         else:  # IslamicDateStrategy.AT_MIDNIGHT
-            next_time = dt_util.start_of_local_day(dt) + timedelta(days=1)
+            next_time = dt_util.start_of_local_day(dt)
+            next_time = next_time + timedelta(days=1)
             idate = dt.date()
 
         (iyear, imonth, iday) = lupt_query.get_islamic_date(
@@ -216,7 +215,7 @@ class Lupt(Entity):
         self._attrs[STATE_ATTR_ISLAMIC_MONTH] = imonth
         self._attrs[STATE_ATTR_ISLAMIC_DAY] = iday
 
-        return next_time
+        return dt_util.as_utc(next_time)
 
     def calculate_next_prayer_time(self, prayer, dt):
         """Set up the next time for given prayer."""
@@ -228,7 +227,7 @@ class Lupt(Entity):
         ).lower()
         next_time = next_prayer[1]
         self._attrs[f"next_{formatted_prayer_time}"] = next_time.isoformat()
-        return next_time
+        return dt_util.as_utc(next_time)
 
     def calculate_prayer_time(self, dt):
         """Calculate current prayer."""
@@ -248,4 +247,4 @@ class Lupt(Entity):
 
         self.calculate_next_prayer_time(current_prayer, dt)
 
-        return next_time
+        return dt_util.as_utc(next_time)

@@ -1,13 +1,22 @@
 """Fixtures for tests."""
-import datetime
-
 from homeassistant.core import callback
 from london_unified_prayer_times import config as lupt_config, timetable
 import pytest
-import pytz
 
 from custom_components.lupt import Lupt
 from custom_components.lupt.const import DOMAIN
+
+from .test_init import create_utc_datetime
+
+pytest_plugins = "pytest_homeassistant_custom_component"
+
+
+# This fixture enables loading custom integrations in all tests.
+# Remove to enable selective use of this fixture
+@pytest.fixture(autouse=True)
+def auto_enable_custom_integrations(enable_custom_integrations):
+    """Allow custom integrations."""
+    yield
 
 
 @pytest.fixture
@@ -96,19 +105,17 @@ URL = "https://mock.location.com"
 def config():
     """Create a mocked hass config."""
     return {
-        "lupt": {
-            "url": URL,
-            "zawaal_mins": 10,
-            "islamic_date_at_maghrib": False,
-            "use_asr_mithl_2": False,
-        }
+        "url": URL,
+        "zawaal_mins": 10,
+        "islamic_date_at_maghrib": False,
+        "use_asr_mithl_2": False,
     }
 
 
 @pytest.fixture
 def start_dt():
     """Create a simple UTC time."""
-    return pytz.utc.localize(datetime.datetime(2021, 10, 2, 13, 00))
+    return create_utc_datetime(2021, 10, 2, 13, 00)
 
 
 @pytest.fixture
@@ -152,14 +159,14 @@ def lupt_mock(hass, three_day_timetable, config):
 @pytest.fixture
 def lupt_mock_maghrib(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
-    config["lupt"]["islamic_date_at_maghrib"] = True
+    config["islamic_date_at_maghrib"] = True
     return set_up_mock(hass, three_day_timetable, config)
 
 
 @pytest.fixture
 def lupt_mock_mithl2(hass, three_day_timetable, config, mocker):
     """Mock the loaded timetable."""
-    config["lupt"]["use_asr_mithl_2"] = True
+    config["use_asr_mithl_2"] = True
     return set_up_mock(hass, three_day_timetable, config)
 
 

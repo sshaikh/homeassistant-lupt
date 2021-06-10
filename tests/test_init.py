@@ -7,7 +7,7 @@ import homeassistant.core as ha
 from homeassistant.setup import async_setup_component
 import homeassistant.util.dt as dt_util
 from london_unified_prayer_times import query as lupt_query
-import pytz
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.lupt.const import (
     DOMAIN,
@@ -22,28 +22,34 @@ from custom_components.lupt.const import (
     STATE_ATTR_NUM_DATES,
 )
 
-dt_util.set_default_time_zone(pytz.timezone("Europe/London"))
+DEFAULT_TZ = dt_util.get_time_zone("Europe/London")
+dt_util.set_default_time_zone(DEFAULT_TZ)
 
 
 def create_utc_datetime(y, m, d, hh, mm):
     """Create a simple UTC time."""
-    return pytz.utc.localize(datetime.datetime(y, m, d, hh, mm))
+    return datetime.datetime(y, m, d, hh, mm).replace(tzinfo=datetime.timezone.utc)
 
 
 def create_local_datetime(y, m, d, hh, mm):
     """Create a simple UK time."""
-    uktz = pytz.timezone("Europe/London")
-    return datetime.datetime(y, m, d, hh, mm).astimezone(uktz)
+    return dt_util.as_local(datetime.datetime(y, m, d, hh, mm))
 
 
-async def test_async_setup(hass, lupt_mock_good_load, config):
-    """Test the component gets setup."""
-    assert await async_setup_component(hass, DOMAIN, config) is True
+async def test_async_setup_from_config(hass, lupt_mock_good_load, config):
+    """Test component set up from config."""
+    config_entry = MockConfigEntry(domain=DOMAIN, data=config)
+    config_entry.add_to_hass(hass)
+
+    assert await async_setup_component(hass, DOMAIN, {})
 
 
-async def test_async_setup_no_load(hass, lupt_mock_bad_load, config):
-    """Test the component gets setup when no existing timetable."""
-    assert await async_setup_component(hass, DOMAIN, config) is True
+async def test_async_setup_from_config_no_load(hass, lupt_mock_bad_load, config):
+    """Test component set up from config."""
+    config_entry = MockConfigEntry(domain=DOMAIN, data=config)
+    config_entry.add_to_hass(hass)
+
+    assert await async_setup_component(hass, DOMAIN, {})
 
 
 def test_get_cached_timetable(lupt_mock, three_day_timetable):
@@ -264,8 +270,13 @@ def assert_state(hass, state):
 async def test_state_change(hass, legacy_patchable_time, lupt_mock_good_load, config):
     """Test state updates on prayer time."""
     utc_now = create_utc_datetime(2021, 10, 2, 12, 00)
+
+    config_entry = MockConfigEntry(domain=DOMAIN, data=config)
+    config_entry.add_to_hass(hass)
+
     with patch("homeassistant.helpers.condition.dt_util.utcnow", return_value=utc_now):
-        await async_setup_component(hass, DOMAIN, config)
+        await async_setup_component(hass, DOMAIN, {})
+
     await hass.async_block_till_done()
     assert_state(hass, "Zuhr")
 
@@ -302,8 +313,10 @@ async def test_midnight_refresh(
 ):
     """Test timetable daily refresh."""
     utc_now = create_local_datetime(2021, 10, 2, 23, 00)
+    config_entry = MockConfigEntry(domain=DOMAIN, data=config)
+    config_entry.add_to_hass(hass)
     with patch("homeassistant.helpers.condition.dt_util.utcnow", return_value=utc_now):
-        await async_setup_component(hass, DOMAIN, config)
+        await async_setup_component(hass, DOMAIN, {})
     await hass.async_block_till_done()
     first_update = lupt_query.get_info(three_day_timetable)[3][0].isoformat()
     later_update = lupt_query.get_info(three_day_timetable_later)[3][0].isoformat()
@@ -329,8 +342,10 @@ async def test_midnight_refresh(
 async def test_idate_change(hass, legacy_patchable_time, lupt_mock_good_load, config):
     """Test Islmaic date change."""
     utc_now = create_utc_datetime(2021, 10, 2, 12, 00)
+    config_entry = MockConfigEntry(domain=DOMAIN, data=config)
+    config_entry.add_to_hass(hass)
     with patch("homeassistant.helpers.condition.dt_util.utcnow", return_value=utc_now):
-        await async_setup_component(hass, DOMAIN, config)
+        await async_setup_component(hass, DOMAIN, {})
     await hass.async_block_till_done()
 
     assert_attribute(hass, STATE_ATTR_ISLAMIC_DATE, "25 Safar 1443")
