@@ -1,6 +1,7 @@
 """Tests for the config flow."""
 
 import pytest
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.lupt import config_flow
 from custom_components.lupt.const import CONFIG_SCHEMA, DOMAIN, URL
@@ -55,3 +56,17 @@ async def test_bad_url(hass):
     )
 
     assert result["errors"] == {URL: "cannot_connect"}
+
+
+async def test_already_configured(hass, config):
+    """Test abort when already configured."""
+
+    config_entry = MockConfigEntry(domain=DOMAIN, data=config, unique_id=DOMAIN)
+    config_entry.add_to_hass(hass)
+
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+
+    assert result["type"] == "abort"
+    assert result["reason"] == "already_configured"

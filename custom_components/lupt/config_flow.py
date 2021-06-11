@@ -32,6 +32,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(self, user_input: Optional[Dict[str, Any]] = None):
         """Handle the initial step."""
         errors = {}
+
+        await self.async_set_unique_id(DOMAIN)
+        self._abort_if_unique_id_configured()
+
         if user_input is not None:
             url = user_input[URL]
             try:
