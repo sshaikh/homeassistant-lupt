@@ -136,7 +136,7 @@ def lupt_mock_bad_load(three_day_timetable, start_dt, mocker):
         side_effect=Exception,
     )
     mocker.patch(
-        "custom_components.lupt.lupt_cache." + "refresh_timetable_by_name",
+        "custom_components.lupt.lupt_cache." + "load_timetable",
         return_value=three_day_timetable,
     )
     mocker.patch("custom_components.lupt.dt_util.utcnow", return_value=start_dt)

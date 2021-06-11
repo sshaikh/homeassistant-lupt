@@ -118,7 +118,7 @@ class Lupt(Entity):
         except Exception:
             _LOGGER.info("Error initialising timetable. Trying to load local copy.")
             temp_timetable = await self.hass.async_add_executor_job(
-                lambda: lupt_cache.refresh_timetable_by_name(HASS_TIMETABLE)
+                lambda: lupt_cache.load_timetable(HASS_TIMETABLE, None)
             )
 
         self.set_cached_timetable(temp_timetable)
