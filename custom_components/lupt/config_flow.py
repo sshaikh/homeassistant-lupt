@@ -39,13 +39,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 await validate_url(self.hass, url, css)
                 return self.async_create_entry(title=NAME, data=user_input)
             except UrlValueError:
-                print("url error")
                 errors[URL] = "cannot_connect"
             except Exception:
-                print("other error")
                 errors[URL] = "unknown"
 
-        print(f"returning {errors}")
         return self.async_show_form(
             step_id="user", data_schema=CONFIG_SCHEMA, errors=errors
         )
