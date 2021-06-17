@@ -1,4 +1,5 @@
 """Main integration for lupt."""
+import asyncio
 from datetime import timedelta
 import logging
 
@@ -44,6 +45,7 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+PLATFORMS = ["trigger"]
 
 
 async def async_setup(hass: core.HomeAssistant, config: dict) -> bool:
@@ -56,7 +58,28 @@ async def async_setup_entry(hass: core.HomeAssistant, entry: ConfigEntry) -> boo
     """Set up the London Unified Prayer Times component from a config entry."""
     lupt = Lupt(hass, entry.data)
     await lupt.async_init()
+    hass.data[DOMAIN][entry.entry_id] = lupt
+
     return True
+
+
+async def async_unload_entry(hass: core.HomeAssistant, entry: ConfigEntry):
+    """Unload a config entry."""
+
+    unload_ok = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(entry, component)
+                for component in PLATFORMS
+            ]
+        )
+    )
+
+    if unload_ok:
+        lupt = hass.data[DOMAIN].pop(entry.entry_id)
+        lupt.detach()
+
+    return unload_ok
 
 
 class Lupt(Entity):
@@ -89,6 +112,12 @@ class Lupt(Entity):
         self.unsub_timetable = None
         self.unsub_prayer_time = None
         self.unsub_islamic_date = None
+
+    def detach(self):
+        """Detach all subs."""
+        self.execute_if_defined(self.unsub_timetable)
+        self.execute_if_defined(self.unsub_prayer_time)
+        self.execute_if_defined(self.unsub_islamic_date)
 
     async def async_init(self):
         """Initialise async part of lupt."""

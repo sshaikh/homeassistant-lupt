@@ -340,7 +340,7 @@ async def test_midnight_refresh(
 
 
 async def test_idate_change(hass, legacy_patchable_time, lupt_mock_good_load, config):
-    """Test Islmaic date change."""
+    """Test Islamic date change."""
     utc_now = create_utc_datetime(2021, 10, 2, 12, 00)
     config_entry = MockConfigEntry(domain=DOMAIN, data=config)
     config_entry.add_to_hass(hass)
@@ -360,3 +360,38 @@ async def test_idate_change(hass, legacy_patchable_time, lupt_mock_good_load, co
         await hass.async_block_till_done()
 
     assert_attribute(hass, STATE_ATTR_ISLAMIC_DATE, "26 Safar 1443")
+
+
+async def test_async_unload_entry(
+    hass, legacy_patchable_time, lupt_mock_good_load, config
+):
+    """Test component is unloaded correctly."""
+
+    utc_now = create_utc_datetime(2021, 10, 2, 12, 00)
+
+    config_entry = MockConfigEntry(domain=DOMAIN, data=config)
+    config_entry.add_to_hass(hass)
+
+    with patch("homeassistant.helpers.condition.dt_util.utcnow", return_value=utc_now):
+        await async_setup_component(hass, DOMAIN, {})
+
+    await hass.async_block_till_done()
+    assert_state(hass, "Zuhr")
+
+    assert await config_entry.async_unload(hass)
+
+    test_time = dt_util.parse_datetime(
+        hass.states.get(ENTITY_ID).attributes["next_asr"]
+    )
+
+    assert test_time is not None
+
+    patched_time = test_time + timedelta(seconds=5)
+
+    with patch(
+        "homeassistant.helpers.condition.dt_util.utcnow", return_value=patched_time
+    ):
+        hass.bus.async_fire(ha.EVENT_TIME_CHANGED, {ha.ATTR_NOW: patched_time})
+        await hass.async_block_till_done()
+
+    assert_state(hass, "Zuhr")
