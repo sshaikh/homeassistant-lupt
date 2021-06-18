@@ -1,6 +1,8 @@
 # London Unified Prayer Times for Home Assistant
 
-An alternative Islamic Prayer Times integration for Home Assistant, that uses times sourced from the London Unified Prayer Timetable via the excellent London Unified Prayer Timetable Python library at https://github.com/sshaikh/london_unified_prayer_times. For more background and information please see the library's README, but in short this is an opinionated and curated timetable - that is, not wholly based on calculation and so is always subject to at least an initial remote download.
+An alternative Islamic Prayer Times integration for Home Assistant, that uses times sourced from the London Unified Prayer Timetable via the excellent London Unified Prayer Timetable Python library at https://github.com/sshaikh/london_unified_prayer_times.
+
+For more background and information please see the library's README, but in short this is an opinionated and curated timetable - that is, not wholly based on calculation and so is always subject to at least an initial remote download.
 
 ## Installation
 
@@ -51,7 +53,7 @@ Also provided are state attributes that hold things like next times for particul
 
 As well as state changes, you can also create automation triggers. Although similar to automating on states, these expose access to the full range of LUPT events, as well as allowing an offset to be provided in order to, for example, set an alert 30 mins before Maghrib each day. The downside is that there is no built in UI support for custom component triggers.
 
-To create a trigger, while creating your new automation, pick an existing trigger (I use Sun), and use the menu button to "Edit in YAML". Then use the following code:
+To create a trigger, while creating your new automation, pick an existing trigger (I use Sun), and use the menu button to `Edit in YAML`. Then use the following code:
 
 ```
 platform: lupt
