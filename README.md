@@ -8,10 +8,11 @@ Right now the best way to install this is to clone the repo and get the code int
 
 ## Usage
 
-Once installed, you should be able to add the integration via the UI - search for "London" or "lupt" to filter the integration.
+Once installed, you should be able to add the integration via the UI - search for `London` or `lupt` to filter the integration.
 
 The options are as follows:
 
+```
 URL (required): The URL to a resource that contains the prayer time data (not provided but you should be able to guess it)
 
 CSS Class (optional): Please leave this blank (which will use the default) unless you know what it's for.
@@ -21,14 +22,17 @@ Zawaal Mins: The number of minutes before Zuhr that you wish Zawaal to start. Pl
 When to change the Islamic date: If checked, the Islamic date will be updated at Maghrib instead of midnight
 
 Which Mithl to use for Asr: If checked, the integration will use Mithl 2 (otherwise known as Hanafi Asr)
+```
 
-Once running there's not much else to do. You should see a card that shows the current state and some attributes you may find useful. For more details see the next section.
+Once running there's not much else to do. You should now see a card in Lovelace that has the current state and some attributes you may find useful. If your dashboard isn't automatically updated then you may have to create a card manually. The domain for this integration is `lupt`.  For more details on states and events see the next section.
 
-The integration will trigger a database update every night at a quarter past midnight (local time). However the initial database load will have at times at least till the end of the year, so this isn't strictly necessary but implemented in case Islamic dates change. If this update fails, the integration will fall back to the last version of the database - effectively meaning you should be able to use this integration without a persistent internet connection. You'd probably want to update it at least once a year, either by allowing it access to the internet overnight or by manually forcing an update by removing and readding the integration.
+The integration will trigger a database update every night at a quarter past midnight (local time). However the initial database load will have at times at least till the end of the year, so this isn't strictly necessary but implemented in case Islamic dates change.
+
+If this update fails, the integration will fall back to the last version of the database - effectively meaning you should be able to use this integration without a persistent internet connection. You'd probably want to update it at least once a year, either by allowing it access to the internet overnight or by manually forcing an update by removing and readding the integration.
 
 ## Automation
 
-Unlike the Prayer Times integration built into HA, LUPT uses state to indicate what "prayer section" of the day it is. This means you can use state changes to automate on. Generally, the state uses the prayer name, apart from Zawaal and the Sunrise-Zuhr window. The order of states then goes like this:
+Unlike the Prayer Times integration built into HA, LUPT uses state to indicate what "prayer section" of the day it is. This means you can use state changes to automate on. Generally, the state uses the prayer name, apart from Zawaal and the Sunrise-Zuhr window. The order of states cycles like this:
 
 ```
 Fajr
@@ -38,11 +42,12 @@ Zuhr
 Asr
 Maghrib
 Ishā
+Fajr
 ```
 
 Also provided are state attributes that hold things like next times for particular prayers or events, as well as the Islamic date and some other diagnostic data.
 
-As well as state changes, you can also create automation triggers. Although similar to automating on states, these expose access to the full range of Lupt events, as well as allowing an offset to be provided in order to, for example, set an alert 30 mins before Maghrib each day. The downside is that there is no built in UI support for custom component triggers.
+As well as state changes, you can also create automation triggers. Although similar to automating on states, these expose access to the full range of LUPT events, as well as allowing an offset to be provided in order to, for example, set an alert 30 mins before Maghrib each day. The downside is that there is no built in UI support for custom component triggers.
 
 To create a trigger, while creating your new automation, pick an existing trigger (I use Sun), and use the menu button to "Edit in YAML". Then use the following code:
 
