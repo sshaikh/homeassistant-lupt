@@ -1,6 +1,6 @@
 # London Unified Prayer Times for Home Assistant
 
-An alternative Islamic Prayer Times integration for Home Assistant, that uses times sourced from the London Unified Prayer Timetable via the excellent London Unified Prayer Timetable Python library at https://github.com/sshaikh/london_unified_prayer_times. For more background and information please see the library's README.
+An alternative Islamic Prayer Times integration for Home Assistant, that uses times sourced from the London Unified Prayer Timetable via the excellent London Unified Prayer Timetable Python library at https://github.com/sshaikh/london_unified_prayer_times. For more background and information please see the library's README, but in short this is an opinionated and curated timetable - that is, not wholly based on calculation and so is always subject to at least an initial remote download.
 
 ## Installation
 
